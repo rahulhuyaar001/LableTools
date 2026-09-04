@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce PDF Tools Hub</title>
+    <!-- PDF-lib for editing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <!-- PDF.js for reading text -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f5;
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 30px;
+            margin: 0;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+        h2 { color: #2c3e50; margin-top: 0; margin-bottom: 5px; }
+        p { color: #7f8c8d; margin-bottom: 20px; font-size: 14px; }
+        
+        /* Inputs & Buttons */
+        input[type="file"], input[type="text"] {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            border: 1px solid #dcdde1; border-radius: 6px;
+            box-sizing: border-box; font-family: inherit;
+            background-color: #f8f9fa;
+        }
+        .btn {
+            color: white; padding: 12px 20px; border: none; border-radius: 6px;
+            cursor: pointer; font-size: 14px; font-weight: bold;
+            transition: background 0.3s; width: 100%;
+        }
+        .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+        .btn-green { background-color: #27ae60; }
+        .btn-green:hover { background-color: #219150; }
+        .btn-blue { background-color: #2874f0; } /* Flipkart Blue */
+        .btn-blue:hover { background-color: #1c5fc7; }
+        .btn-indigo { background-color: #4F46E5; }
+        .btn-indigo:hover { background-color: #4338CA; }
+        .btn-clear { background-color: #e74c3c; flex: 0.3; }
+        .btn-clear:hover { background-color: #c0392b; }
+        .btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        
+        iframe {
+            width: 100%; height: 500px; border: 2px dashed #bdc3c7;
+            margin-top: 20px; border-radius: 8px; background-color: #fafafa;
+            display: none;
+        }
+        .status { font-weight: bold; margin-top: 10px; font-size: 14px; min-height: 20px; }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .warning { color: #e67e22; }
+    </style>
+</head>
+<body>
+
+    <!-- TOOL 1: Amazon Ultimate Label Sorter -->
+    <div class="container">
+        <h2>Amazon Label Sorter</h2>
+        <p>Extracts SKUs with Quantity, sorts them, and removes invoices.</p>
+        <input type="file" id="amazonPdfInput" accept="application/pdf">
+        <div id="amazonStatus" class="status warning"></div>
+        <iframe id="amazonPreview"></iframe>
+    </div>
+
+    <!-- TOOL 2: Flipkart Label Cropper -->
+    <div class="container">
+        <h2>Flipkart Label Cropper</h2>
+        <p>Extract exact 4x6 inch label dimensions.</p>
+        <input type="file" id="flipkartPdfInput" accept="application/pdf" multiple>
+        <div class="btn-group">
+            <button id="flipkartCropBtn" class="btn btn-blue">Crop Label</button>
+            <button id="clearFlipkartBtn" class="btn btn-clear">Clear</button>
+        </div>
+        <div id="flipkartStatus" class="status"></div>
+    </div>
+
+    <!-- TOOL 3: PDF Merger -->
+    <div class="container">
+        <h2>PDF Merge Tool</h2>
+        <p>Combine multiple PDFs into one document.</p>
+        <input type="file" id="mergePdfInput" multiple accept="application/pdf">
+        <input type="text" id="mergeFilename" placeholder="Save file as (e.g., Merged_Document)">
+        <div class="btn-group">
+            <button id="mergeBtn" class="btn btn-indigo">Merge & Download</button>
+            <button id="clearMergeBtn" class="btn btn-clear">Clear</button>
+        </div>
+        <div id="mergeStatus" class="status"></div>
+    </div>
+
+    <script>
+        const { PDFDocument, rgb, StandardFonts } = PDFLib;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // Helper: Trigger File Download
+        function triggerDownload(fileBytes, filename) {
+            const blob = new Blob([fileBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url; link.download = filename;
+            document.body.appendChild(link); link.click();
+            document.body.removeChild(link); URL.revokeObjectURL(url);
+        }
+
+        /* ==========================================
+           1. AMAZON LABEL SORTER
+           ========================================== */
+        document.getElementById('amazonPdfInput').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const statusText = document.getElementById('amazonStatus');
+            const iframe = document.getElementById('amazonPreview');
+            statusText.className = "status warning";
+            statusText.innerText = "Extracting SKUs and Quantities... Please wait.";
+            iframe.style.display = "none";
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdfDoc = await loadingTask.promise;
+                
+                const srcPdfDoc = await PDFDocument.load(arrayBuffer);
+                const finalPdfDoc = await PDFDocument.create();
+                const font = await finalPdfDoc.embedFont(StandardFonts.HelveticaBold);
+
+                const numPages = pdfDoc.numPages;
+                let labelDataArray = [];
+
+                for (let i = 1; i <= numPages; i++) {
+                    const page = await pdfDoc.getPage(i);
+                    const textContent = await page.getTextContent();
+                    let fullText = textContent.items.map(item => item.str).join(' ');
+
+                    if (fullText.includes("Page 2 of 2") || fullText.includes("Invoice Details")) {
+                        let skus = [];
+                        const regex = /\(\s*([^)]+)\s*\)\s*HSN(?:[\s:]*\d+)?/gi;
+                        let match;
+                        
+                        while ((match = regex.exec(fullText)) !== null) {
+                            let skuName = match[1].trim();
+                            let qty = 1; 
+                            
+                            let afterText = fullText.substring(regex.lastIndex, regex.lastIndex + 60);
+                            let tokens = afterText.trim().split(/\s+/);
+                            
+                            for (let token of tokens) {
+                                if (/^\d+$/.test(token)) {
+                                    qty = parseInt(token, 10);
+                                    break;
+                                }
+                            }
+                            skus.push(`${skuName}-${qty}`);
+                        }
+
+                        let extractedSKU = "SKU NOT FOUND";
+                        if (skus.length > 0) {
+                            let uniqueSkus = [...new Set(skus)];
+                            extractedSKU = uniqueSkus.join(" + ");
+                        } else {
+                            const allBrackets = fullText.match(/\(\s*([^)]+)\s*\)/g);
+                            if (allBrackets && allBrackets.length > 0) {
+                                let lastBracket = allBrackets[allBrackets.length - 1];
+                                extractedSKU = lastBracket.replace(/[\(\)]/g, '').trim() + "-1";
+                            }
+                        }
+
+                        if (i > 1) {
+                            labelDataArray.push({ sku: extractedSKU, labelPageIndex: i - 2 });
+                        }
+                    }
+                }
+
+                labelDataArray.sort((a, b) => a.sku.localeCompare(b.sku));
+                const pageIndicesToCopy = labelDataArray.map(data => data.labelPageIndex);
+                
+                if (pageIndicesToCopy.length > 0) {
+                    const copiedPages = await finalPdfDoc.copyPages(srcPdfDoc, pageIndicesToCopy);
+                    copiedPages.forEach((page, index) => {
+                        finalPdfDoc.addPage(page);
+                        const { width, height } = page.getSize();
+                        const currentSKU = labelDataArray[index].sku;
+                        
+                        let fontSize = 18;
+                        if (currentSKU.length > 30) fontSize = 14;
+                        if (currentSKU.length > 45) fontSize = 11;
+                        if (currentSKU.length > 60) fontSize = 9;
+
+                        page.drawRectangle({ x: 10, y: height - 40, width: width - 20, height: 30, color: rgb(1, 1, 1) });
+                        page.drawText(`SKU: ${currentSKU}`, { x: 15, y: height - 32, size: fontSize, font: font, color: rgb(0, 0, 0) });
+                    });
+                } else {
+                    throw new Error("No invoices found to process.");
+                }
+
+                const pdfBytes = await finalPdfDoc.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                
+                iframe.src = url;
+                iframe.style.display = "block";
+                statusText.className = "status success";
+                statusText.innerText = `Success! Sorted ${labelDataArray.length} labels.`;
+
+            } catch (error) {
+                console.error(error);
+                statusText.className = "status error";
+                statusText.innerText = "Error processing PDF. Check console for details.";
+            }
+        });
+
+        /* ==========================================
+           2. FLIPKART LABEL CROPPER
+           ========================================== */
+        const flipkartCropBtn = document.getElementById('flipkartCropBtn');
+        flipkartCropBtn.addEventListener('click', async () => {
+            const input = document.getElementById('flipkartPdfInput');
+            const status = document.getElementById('flipkartStatus');
+            
+            if (input.files.length === 0) { 
+                status.textContent = 'Upload PDF first.'; 
+                status.className = 'status error'; 
+                return; 
+            }
+            
+            try {
+                flipkartCropBtn.disabled = true; 
+                flipkartCropBtn.textContent = 'Processing...'; 
+                status.textContent = '';
+                
+                const newPdfDoc = await PDFDocument.create();
+                const LABEL_WIDTH = 4 * 72; 
+                const LABEL_HEIGHT = 6 * 72; 
+
+                for (const file of input.files) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdfDoc = await PDFDocument.load(arrayBuffer);
+                    const pages = pdfDoc.getPages();
+                    
+                    for (const page of pages) {
+                        const { width, height } = page.getSize(); 
+                        const newPage = newPdfDoc.addPage([LABEL_WIDTH, LABEL_HEIGHT]);
+                        const embeddedPage = await newPdfDoc.embedPage(page);
+                        
+                        const scaleFactor = 1.15; 
+                        const scaledWidth = width * scaleFactor;
+                        const scaledHeight = height * scaleFactor;
+                        const xCenterOffset = (LABEL_WIDTH - scaledWidth) / 2;
+                        const yTopOffset = LABEL_HEIGHT - scaledHeight + 20;
+                        
+                        newPage.drawPage(embeddedPage, { x: xCenterOffset, y: yTopOffset, xScale: scaleFactor, yScale: scaleFactor });
+                    }
+                }
+                
+                triggerDownload(await newPdfDoc.save(), 'Flipkart_4x6_Label.pdf');
+                status.textContent = '✅ Cropped Successfully!'; 
+                status.className = 'status success';
+            } catch (error) { 
+                status.textContent = 'Error cropping document.'; 
+                status.className = 'status error';
+            } finally { 
+                flipkartCropBtn.disabled = false; 
+                flipkartCropBtn.textContent = 'Crop Label'; 
+            }
+        });
+
+        document.getElementById('clearFlipkartBtn').addEventListener('click', () => { 
+            document.getElementById('flipkartPdfInput').value = ''; 
+            document.getElementById('flipkartStatus').textContent = ''; 
+        });
+
+        /* ==========================================
+           3. PDF MERGER
+           ========================================== */
+        const mergeBtn = document.getElementById('mergeBtn');
+        mergeBtn.addEventListener('click', async () => {
+            const input = document.getElementById('mergePdfInput');
+            const filenameInput = document.getElementById('mergeFilename');
+            const status = document.getElementById('mergeStatus');
+            const files = input.files;
+
+            if (files.length < 2) {
+                status.textContent = "Please select at least 2 PDF files to merge.";
+                status.className = 'status error';
+                return;
+            }
+
+            let finalName = filenameInput.value.trim() || "Merged_Document";
+            if (!finalName.toLowerCase().endsWith('.pdf')) {
+                finalName += ".pdf";
+            }
+
+            mergeBtn.disabled = true;
+            status.textContent = "Merging PDFs... Please wait.";
+            status.className = 'status warning';
+
+            try {
+                const mergedPdf = await PDFDocument.create();
+                
+                for (let i = 0; i < files.length; i++) {
+                    const arrayBuffer = await files[i].arrayBuffer();
+                    const pdf = await PDFDocument.load(arrayBuffer);
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    
+                    copiedPages.forEach((page) => {
+                        mergedPdf.addPage(page);
+                    });
+                }
+
+                const pdfBytes = await mergedPdf.save();
+                triggerDownload(pdfBytes, finalName);
+
+                status.textContent = "Successfully merged and downloaded!";
+                status.className = 'status success';
+                
+                input.value = ''; 
+                filenameInput.value = '';
+                setTimeout(() => { status.textContent = ""; }, 3000);
+
+            } catch (error) {
+                console.error("Error merging PDFs: ", error);
+                status.textContent = "An error occurred while merging.";
+                status.className = 'status error';
+            } finally {
+                mergeBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('clearMergeBtn').addEventListener('click', () => { 
+            document.getElementById('mergePdfInput').value = ''; 
+            document.getElementById('mergeFilename').value = ''; 
+            document.getElementById('mergeStatus').textContent = ''; 
+        });
+
+    </script>
+</body>
+</html>
