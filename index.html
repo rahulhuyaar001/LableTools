@@ -86,6 +86,8 @@
             <button id="clearFlipkartBtn" class="btn btn-clear">Clear</button>
         </div>
         <div id="flipkartStatus" class="status"></div>
+        <!-- Flipkart Preview Iframe Added Here -->
+        <iframe id="flipkartPreview"></iframe>
     </div>
 
     <!-- TOOL 3: PDF Merger -->
@@ -99,6 +101,8 @@
             <button id="clearMergeBtn" class="btn btn-clear">Clear</button>
         </div>
         <div id="mergeStatus" class="status"></div>
+        <!-- Merge Preview Iframe Added Here -->
+        <iframe id="mergePreview"></iframe>
     </div>
 
     <script>
@@ -112,7 +116,9 @@
             const link = document.createElement('a');
             link.href = url; link.download = filename;
             document.body.appendChild(link); link.click();
-            document.body.removeChild(link); URL.revokeObjectURL(url);
+            document.body.removeChild(link); 
+            // We delay revoking the URL slightly in case the browser needs time to process the download
+            setTimeout(() => URL.revokeObjectURL(url), 100); 
         }
 
         /* ==========================================
@@ -229,6 +235,7 @@
         flipkartCropBtn.addEventListener('click', async () => {
             const input = document.getElementById('flipkartPdfInput');
             const status = document.getElementById('flipkartStatus');
+            const iframe = document.getElementById('flipkartPreview');
             
             if (input.files.length === 0) { 
                 status.textContent = 'Upload PDF first.'; 
@@ -240,6 +247,7 @@
                 flipkartCropBtn.disabled = true; 
                 flipkartCropBtn.textContent = 'Processing...'; 
                 status.textContent = '';
+                iframe.style.display = 'none';
                 
                 const newPdfDoc = await PDFDocument.create();
                 const LABEL_WIDTH = 4 * 72; 
@@ -265,7 +273,17 @@
                     }
                 }
                 
-                triggerDownload(await newPdfDoc.save(), 'Flipkart_4x6_Label.pdf');
+                const pdfBytes = await newPdfDoc.save();
+                
+                // Show Preview
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                iframe.src = url;
+                iframe.style.display = "block";
+
+                // Trigger Download
+                triggerDownload(pdfBytes, 'Flipkart_4x6_Label.pdf');
+
                 status.textContent = '✅ Cropped Successfully!'; 
                 status.className = 'status success';
             } catch (error) { 
@@ -280,6 +298,11 @@
         document.getElementById('clearFlipkartBtn').addEventListener('click', () => { 
             document.getElementById('flipkartPdfInput').value = ''; 
             document.getElementById('flipkartStatus').textContent = ''; 
+            
+            // Clear Preview
+            const iframe = document.getElementById('flipkartPreview');
+            iframe.src = '';
+            iframe.style.display = 'none';
         });
 
         /* ==========================================
@@ -290,6 +313,7 @@
             const input = document.getElementById('mergePdfInput');
             const filenameInput = document.getElementById('mergeFilename');
             const status = document.getElementById('mergeStatus');
+            const iframe = document.getElementById('mergePreview');
             const files = input.files;
 
             if (files.length < 2) {
@@ -306,6 +330,7 @@
             mergeBtn.disabled = true;
             status.textContent = "Merging PDFs... Please wait.";
             status.className = 'status warning';
+            iframe.style.display = 'none';
 
             try {
                 const mergedPdf = await PDFDocument.create();
@@ -321,6 +346,14 @@
                 }
 
                 const pdfBytes = await mergedPdf.save();
+                
+                // Show Preview
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                iframe.src = url;
+                iframe.style.display = "block";
+
+                // Trigger Download
                 triggerDownload(pdfBytes, finalName);
 
                 status.textContent = "Successfully merged and downloaded!";
@@ -343,6 +376,11 @@
             document.getElementById('mergePdfInput').value = ''; 
             document.getElementById('mergeFilename').value = ''; 
             document.getElementById('mergeStatus').textContent = ''; 
+            
+            // Clear Preview
+            const iframe = document.getElementById('mergePreview');
+            iframe.src = '';
+            iframe.style.display = 'none';
         });
 
     </script>
