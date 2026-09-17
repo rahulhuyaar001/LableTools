@@ -86,7 +86,6 @@
             <button id="clearFlipkartBtn" class="btn btn-clear">Clear</button>
         </div>
         <div id="flipkartStatus" class="status"></div>
-        <!-- Flipkart Preview Iframe Added Here -->
         <iframe id="flipkartPreview"></iframe>
     </div>
 
@@ -101,7 +100,6 @@
             <button id="clearMergeBtn" class="btn btn-clear">Clear</button>
         </div>
         <div id="mergeStatus" class="status"></div>
-        <!-- Merge Preview Iframe Added Here -->
         <iframe id="mergePreview"></iframe>
     </div>
 
@@ -117,7 +115,6 @@
             link.href = url; link.download = filename;
             document.body.appendChild(link); link.click();
             document.body.removeChild(link); 
-            // We delay revoking the URL slightly in case the browser needs time to process the download
             setTimeout(() => URL.revokeObjectURL(url), 100); 
         }
 
@@ -152,7 +149,8 @@
                     let fullText = textContent.items.map(item => item.str).join(' ');
 
                     if (fullText.includes("Page 2 of 2") || fullText.includes("Invoice Details")) {
-                        let skus = [];
+                        
+                        let skuMap = {}; 
                         const regex = /\(\s*([^)]+)\s*\)\s*HSN(?:[\s:]*\d+)?/gi;
                         let match;
                         
@@ -169,13 +167,20 @@
                                     break;
                                 }
                             }
-                            skus.push(`${skuName}-${qty}`);
+                            
+                            if (skuMap[skuName]) {
+                                skuMap[skuName] += qty;
+                            } else {
+                                skuMap[skuName] = qty;
+                            }
                         }
 
                         let extractedSKU = "SKU NOT FOUND";
-                        if (skus.length > 0) {
-                            let uniqueSkus = [...new Set(skus)];
-                            extractedSKU = uniqueSkus.join(" + ");
+                        let skuKeys = Object.keys(skuMap);
+
+                        if (skuKeys.length > 0) {
+                            let combinedSkus = skuKeys.map(sku => `${sku}-${skuMap[sku]}`);
+                            extractedSKU = combinedSkus.join(" + ");
                         } else {
                             const allBrackets = fullText.match(/\(\s*([^)]+)\s*\)/g);
                             if (allBrackets && allBrackets.length > 0) {
