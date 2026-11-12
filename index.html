@@ -12,37 +12,45 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #eef2f5;
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 30px;
+            padding: 20px;
             margin: 0;
             overflow: hidden; /* Prevent scrolling before login */
         }
-        .container {
-            max-width: 800px;
-            width: 100%;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            box-sizing: border-box;
-        }
-        h2 { color: #2c3e50; margin-top: 0; margin-bottom: 5px; }
-        p { color: #7f8c8d; margin-bottom: 20px; font-size: 14px; }
         
-        /* Inputs & Buttons */
+        /* Grid Layout for Dashboard */
+        .tools-wrapper {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 { color: #2c3e50; margin-top: 0; margin-bottom: 5px; font-size: 18px; }
+        p { color: #7f8c8d; margin-bottom: 15px; font-size: 12px; line-height: 1.4; }
+        
+        /* Compact Inputs & Buttons */
         input[type="file"], input[type="text"], input[type="password"] {
-            width: 100%; padding: 12px; margin-bottom: 15px;
-            border: 1px solid #dcdde1; border-radius: 6px;
-            box-sizing: border-box; font-family: inherit;
+            width: 100%; padding: 8px 10px; margin-bottom: 12px;
+            border: 1px solid #dcdde1; border-radius: 4px;
+            box-sizing: border-box; font-family: inherit; font-size: 13px;
             background-color: #f8f9fa;
         }
+        
         .btn {
-            color: white; padding: 12px 20px; border: none; border-radius: 6px;
-            cursor: pointer; font-size: 14px; font-weight: bold;
-            transition: background 0.3s; width: 100%;
+            color: white; padding: 8px 15px; border: none; border-radius: 4px;
+            cursor: pointer; font-size: 13px; font-weight: bold;
+            transition: background 0.3s; width: 100%; text-align: center;
         }
         .btn:disabled { opacity: 0.7; cursor: not-allowed; }
         .btn-green { background-color: #27ae60; }
@@ -51,16 +59,24 @@
         .btn-blue:hover { background-color: #1c5fc7; }
         .btn-indigo { background-color: #4F46E5; }
         .btn-indigo:hover { background-color: #4338CA; }
+        .btn-purple { background-color: #8e44ad; }
+        .btn-purple:hover { background-color: #732d91; }
+        .btn-orange { background-color: #f39c12; }
+        .btn-orange:hover { background-color: #d68910; }
+        .btn-teal { background-color: #16a085; }
+        .btn-teal:hover { background-color: #117a65; }
         .btn-clear { background-color: #e74c3c; flex: 0.3; }
         .btn-clear:hover { background-color: #c0392b; }
-        .btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .btn-group { display: flex; gap: 8px; margin-bottom: 5px; }
         
+        /* Compact iframe */
         iframe {
-            width: 100%; height: 500px; border: 2px dashed #bdc3c7;
-            margin-top: 20px; border-radius: 8px; background-color: #fafafa;
-            display: none;
+            width: 100%; height: 200px; border: 1px dashed #bdc3c7;
+            margin-top: 10px; border-radius: 4px; background-color: #fafafa;
+            display: none; flex-grow: 1;
         }
-        .status { font-weight: bold; margin-top: 10px; font-size: 14px; min-height: 20px; }
+        
+        .status { font-weight: bold; margin-top: 8px; font-size: 12px; min-height: 16px; }
         .success { color: #27ae60; }
         .error { color: #e74c3c; }
         .warning { color: #e67e22; }
@@ -72,10 +88,11 @@
             display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
         .auth-box {
-            background: white; padding: 40px; border-radius: 12px;
+            background: white; padding: 30px; border-radius: 8px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;
-            width: 90%; max-width: 400px;
+            width: 90%; max-width: 350px;
         }
+        .auth-box h2 { font-size: 22px; }
     </style>
 </head>
 <body>
@@ -91,48 +108,94 @@
         </div>
     </div>
 
-    <!-- TOOL 1: Amazon Ultimate Label Sorter -->
-    <div class="container">
-        <h2>Amazon Label Sorter</h2>
-        <p>Extracts SKUs with Quantity, sorts them, and removes invoices.</p>
-        <input type="file" id="amazonPdfInput" accept="application/pdf">
-        <div id="amazonStatus" class="status warning"></div>
-        <iframe id="amazonPreview"></iframe>
-    </div>
+    <!-- MAIN DASHBOARD WRAPPER -->
+    <div class="tools-wrapper">
 
-    <!-- TOOL 2: Flipkart Label Cropper -->
-    <div class="container">
-        <h2>Flipkart Label Cropper</h2>
-        <p>Extract exact 4x6 inch label dimensions.</p>
-        <input type="file" id="flipkartPdfInput" accept="application/pdf" multiple>
-        <div class="btn-group">
-            <button id="flipkartCropBtn" class="btn btn-blue">Crop Label</button>
-            <button id="clearFlipkartBtn" class="btn btn-clear">Clear</button>
+        <!-- TOOL 1: Amazon Ultimate Label Sorter -->
+        <div class="container">
+            <h2>Amazon Label Sorter</h2>
+            <p>Extracts SKUs, sorts them, and removes invoices.</p>
+            <input type="file" id="amazonPdfInput" accept="application/pdf">
+            <div id="amazonStatus" class="status warning"></div>
+            <iframe id="amazonPreview"></iframe>
         </div>
-        <div id="flipkartStatus" class="status"></div>
-        <iframe id="flipkartPreview"></iframe>
-    </div>
 
-    <!-- TOOL 3: PDF Merger -->
-    <div class="container">
-        <h2>PDF Merge Tool</h2>
-        <p>Combine multiple PDFs into one document.</p>
-        <input type="file" id="mergePdfInput" multiple accept="application/pdf">
-        <input type="text" id="mergeFilename" placeholder="Save file as (e.g., Merged_Document)">
-        <div class="btn-group">
-            <button id="mergeBtn" class="btn btn-indigo">Merge & Download</button>
-            <button id="clearMergeBtn" class="btn btn-clear">Clear</button>
+        <!-- TOOL 2: Flipkart Label Cropper -->
+        <div class="container">
+            <h2>Flipkart Label Cropper</h2>
+            <p>Extract exact 4x6 inch label dimensions.</p>
+            <input type="file" id="flipkartPdfInput" accept="application/pdf" multiple>
+            <div class="btn-group">
+                <button id="flipkartCropBtn" class="btn btn-blue">Crop</button>
+                <button id="clearFlipkartBtn" class="btn btn-clear">Clear</button>
+            </div>
+            <div id="flipkartStatus" class="status"></div>
+            <iframe id="flipkartPreview"></iframe>
         </div>
-        <div id="mergeStatus" class="status"></div>
-        <iframe id="mergePreview"></iframe>
-    </div>
+
+        <!-- TOOL 3: PDF Merger -->
+        <div class="container">
+            <h2>PDF Merge Tool</h2>
+            <p>Combine multiple PDFs into one document.</p>
+            <input type="file" id="mergePdfInput" multiple accept="application/pdf">
+            <input type="text" id="mergeFilename" placeholder="Save as (e.g., Merged)">
+            <div class="btn-group">
+                <button id="mergeBtn" class="btn btn-indigo">Merge</button>
+                <button id="clearMergeBtn" class="btn btn-clear">Clear</button>
+            </div>
+            <div id="mergeStatus" class="status"></div>
+            <iframe id="mergePreview"></iframe>
+        </div>
+
+        <!-- TOOL 4: PDF Extractor & Rearranger -->
+        <div class="container">
+            <h2>PDF Page Extractor</h2>
+            <p>Extract specific pages (e.g., 1, 8, 9).</p>
+            <input type="file" id="extractPdfInput" accept="application/pdf">
+            <input type="text" id="extractPagesInput" placeholder="Pages to keep (e.g., 1, 8, 9)">
+            <div class="btn-group">
+                <button id="extractBtn" class="btn btn-purple">Extract</button>
+                <button id="clearExtractBtn" class="btn btn-clear">Clear</button>
+            </div>
+            <div id="extractStatus" class="status"></div>
+            <iframe id="extractPreview"></iframe>
+        </div>
+
+        <!-- TOOL 5: PDF Page Remover -->
+        <div class="container">
+            <h2>PDF Page Remover</h2>
+            <p>Delete specific pages (e.g., 2, 5) and keep the rest.</p>
+            <input type="file" id="removePdfInput" accept="application/pdf">
+            <input type="text" id="removePagesInput" placeholder="Pages to remove (e.g., 2, 5)">
+            <div class="btn-group">
+                <button id="removeBtn" class="btn btn-orange">Remove</button>
+                <button id="clearRemoveBtn" class="btn btn-clear">Clear</button>
+            </div>
+            <div id="removeStatus" class="status"></div>
+            <iframe id="removePreview"></iframe>
+        </div>
+
+        <!-- TOOL 6: Odd/Even Page Splitter -->
+        <div class="container">
+            <h2>Odd/Even Splitter</h2>
+            <p>Extract only Odd or Even pages automatically.</p>
+            <input type="file" id="splitPdfInput" accept="application/pdf">
+            <div class="btn-group">
+                <button id="oddBtn" class="btn btn-teal">Odd Pages</button>
+                <button id="evenBtn" class="btn btn-teal">Even Pages</button>
+                <button id="clearSplitBtn" class="btn btn-clear">Clear</button>
+            </div>
+            <div id="splitStatus" class="status"></div>
+            <iframe id="splitPreview"></iframe>
+        </div>
+
+    </div> <!-- END DASHBOARD WRAPPER -->
 
     <script>
         /* ==========================================
            SECURITY & IP BINDING LOGIC
            ========================================== */
         
-        // YAHA APNA PASSWORD CHANGE KAREIN
         const MY_SECURE_PASSWORD = "admin567"; 
 
         async function getUserIP() {
@@ -149,7 +212,6 @@
             const currentIP = await getUserIP();
             const savedIP = localStorage.getItem('authorized_ip');
             
-            // Agar IP match hota hai toh directly unlock kar do
             if (currentIP && savedIP === currentIP) {
                 unlockSite();
             }
@@ -166,7 +228,6 @@
                 const currentIP = await getUserIP();
                 
                 if (currentIP) {
-                    // Password sahi hone par naya IP save karein
                     localStorage.setItem('authorized_ip', currentIP);
                     unlockSite();
                 } else {
@@ -181,20 +242,18 @@
 
         function unlockSite() {
             document.getElementById('authOverlay').style.display = 'none';
-            document.body.style.overflow = 'auto'; // Re-enable scrolling
+            document.body.style.overflow = 'auto'; 
         }
 
-        // Run check on load
         checkAuthStatus();
 
 
         /* ==========================================
-           ORIGINAL PDF TOOLS SCRIPT (Unchanged)
+           PDF TOOLS SCRIPT
            ========================================== */
         const { PDFDocument, rgb, StandardFonts } = PDFLib;
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-        // Helper: Trigger File Download
         function triggerDownload(fileBytes, filename) {
             const blob = new Blob([fileBytes], { type: 'application/pdf' });
             const url = URL.createObjectURL(blob);
@@ -213,7 +272,7 @@
             const statusText = document.getElementById('amazonStatus');
             const iframe = document.getElementById('amazonPreview');
             statusText.className = "status warning";
-            statusText.innerText = "Extracting SKUs and Quantities... Please wait.";
+            statusText.innerText = "Extracting... Please wait.";
             iframe.style.display = "none";
 
             try {
@@ -299,7 +358,7 @@
                         page.drawText(`SKU: ${currentSKU}`, { x: 15, y: height - 32, size: fontSize, font: font, color: rgb(0, 0, 0) });
                     });
                 } else {
-                    throw new Error("No invoices found to process.");
+                    throw new Error("No invoices found.");
                 }
 
                 const pdfBytes = await finalPdfDoc.save();
@@ -314,7 +373,7 @@
             } catch (error) {
                 console.error(error);
                 statusText.className = "status error";
-                statusText.innerText = "Error processing PDF. Check console for details.";
+                statusText.innerText = "Error processing PDF.";
             }
         });
 
@@ -333,7 +392,7 @@
             
             try {
                 flipkartCropBtn.disabled = true; 
-                flipkartCropBtn.textContent = 'Processing...'; 
+                flipkartCropBtn.textContent = 'Wait...'; 
                 status.textContent = '';
                 iframe.style.display = 'none';
                 
@@ -363,31 +422,27 @@
                 
                 const pdfBytes = await newPdfDoc.save();
                 
-                // Show Preview
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 iframe.src = url;
                 iframe.style.display = "block";
 
-                // Trigger Download
                 triggerDownload(pdfBytes, 'Flipkart_4x6_Label.pdf');
 
-                status.textContent = '✅ Cropped Successfully!'; 
+                status.textContent = '✅ Cropped!'; 
                 status.className = 'status success';
             } catch (error) { 
-                status.textContent = 'Error cropping document.'; 
+                status.textContent = 'Error cropping.'; 
                 status.className = 'status error';
             } finally { 
                 flipkartCropBtn.disabled = false; 
-                flipkartCropBtn.textContent = 'Crop Label'; 
+                flipkartCropBtn.textContent = 'Crop'; 
             }
         });
 
         document.getElementById('clearFlipkartBtn').addEventListener('click', () => { 
             document.getElementById('flipkartPdfInput').value = ''; 
             document.getElementById('flipkartStatus').textContent = ''; 
-            
-            // Clear Preview
             const iframe = document.getElementById('flipkartPreview');
             iframe.src = '';
             iframe.style.display = 'none';
@@ -403,7 +458,7 @@
             const files = input.files;
 
             if (files.length < 2) {
-                status.textContent = "Please select at least 2 PDF files to merge.";
+                status.textContent = "Select 2+ PDFs.";
                 status.className = 'status error';
                 return;
             }
@@ -414,7 +469,7 @@
             }
 
             mergeBtn.disabled = true;
-            status.textContent = "Merging PDFs... Please wait.";
+            status.textContent = "Merging...";
             status.className = 'status warning';
             iframe.style.display = 'none';
 
@@ -433,16 +488,14 @@
 
                 const pdfBytes = await mergedPdf.save();
                 
-                // Show Preview
                 const blob = new Blob([pdfBytes], { type: 'application/pdf' });
                 const url = URL.createObjectURL(blob);
                 iframe.src = url;
                 iframe.style.display = "block";
 
-                // Trigger Download
                 triggerDownload(pdfBytes, finalName);
 
-                status.textContent = "Successfully merged and downloaded!";
+                status.textContent = "✅ Merged!";
                 status.className = 'status success';
                 
                 input.value = ''; 
@@ -450,12 +503,252 @@
                 setTimeout(() => { status.textContent = ""; }, 3000);
 
             } catch (error) {
-                console.error("Error merging PDFs: ", error);
-                status.textContent = "An error occurred while merging.";
+                status.textContent = "Error merging.";
                 status.className = 'status error';
             } finally {
                 mergeBtn.disabled = false;
             }
+        });
+        
+        document.getElementById('clearMergeBtn').addEventListener('click', () => { 
+            document.getElementById('mergePdfInput').value = ''; 
+            document.getElementById('mergeFilename').value = '';
+            document.getElementById('mergeStatus').textContent = ''; 
+            const iframe = document.getElementById('mergePreview');
+            iframe.src = '';
+            iframe.style.display = 'none';
+        });
+
+        /* 4. PDF EXTRACTOR */
+        const extractBtn = document.getElementById('extractBtn');
+        extractBtn.addEventListener('click', async () => {
+            const input = document.getElementById('extractPdfInput');
+            const pagesInput = document.getElementById('extractPagesInput');
+            const status = document.getElementById('extractStatus');
+            const iframe = document.getElementById('extractPreview');
+
+            if (input.files.length === 0) {
+                status.textContent = "Upload PDF first.";
+                status.className = 'status error';
+                return;
+            }
+
+            const pagesStr = pagesInput.value.trim();
+            if (!pagesStr) {
+                status.textContent = "Enter page numbers.";
+                status.className = 'status error';
+                return;
+            }
+
+            const pageNumbers = pagesStr.split(',').map(num => parseInt(num.trim(), 10));
+            if (pageNumbers.some(isNaN)) {
+                status.textContent = "Use valid numbers.";
+                status.className = 'status error';
+                return;
+            }
+
+            extractBtn.disabled = true;
+            status.textContent = "Extracting...";
+            status.className = 'status warning';
+            iframe.style.display = 'none';
+
+            try {
+                const arrayBuffer = await input.files[0].arrayBuffer();
+                const srcPdf = await PDFDocument.load(arrayBuffer);
+                const totalPages = srcPdf.getPageCount();
+
+                const indicesToCopy = [];
+                for (let num of pageNumbers) {
+                    if (num < 1 || num > totalPages) {
+                        throw new Error(`Max page is ${totalPages}.`);
+                    }
+                    indicesToCopy.push(num - 1);
+                }
+
+                const newPdf = await PDFDocument.create();
+                
+                const copiedPages = await newPdf.copyPages(srcPdf, indicesToCopy);
+                copiedPages.forEach(page => newPdf.addPage(page));
+
+                const pdfBytes = await newPdf.save();
+
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                iframe.src = url;
+                iframe.style.display = "block";
+
+                triggerDownload(pdfBytes, 'Extracted_Pages.pdf');
+
+                status.textContent = "✅ Extracted!";
+                status.className = 'status success';
+                
+            } catch (error) {
+                status.textContent = error.message || "Error extracting.";
+                status.className = 'status error';
+            } finally {
+                extractBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('clearExtractBtn').addEventListener('click', () => {
+            document.getElementById('extractPdfInput').value = '';
+            document.getElementById('extractPagesInput').value = '';
+            document.getElementById('extractStatus').textContent = '';
+            const iframe = document.getElementById('extractPreview');
+            iframe.src = '';
+            iframe.style.display = 'none';
+        });
+
+        /* 5. PDF PAGE REMOVER */
+        const removeBtn = document.getElementById('removeBtn');
+        removeBtn.addEventListener('click', async () => {
+            const input = document.getElementById('removePdfInput');
+            const pagesInput = document.getElementById('removePagesInput');
+            const status = document.getElementById('removeStatus');
+            const iframe = document.getElementById('removePreview');
+
+            if (input.files.length === 0) {
+                status.textContent = "Upload PDF first.";
+                status.className = 'status error';
+                return;
+            }
+
+            const pagesStr = pagesInput.value.trim();
+            if (!pagesStr) {
+                status.textContent = "Enter pages to remove.";
+                status.className = 'status error';
+                return;
+            }
+
+            const pagesToRemove = pagesStr.split(',').map(num => parseInt(num.trim(), 10));
+            if (pagesToRemove.some(isNaN)) {
+                status.textContent = "Use valid numbers (e.g., 2, 5).";
+                status.className = 'status error';
+                return;
+            }
+
+            removeBtn.disabled = true;
+            status.textContent = "Removing pages...";
+            status.className = 'status warning';
+            iframe.style.display = 'none';
+
+            try {
+                const arrayBuffer = await input.files[0].arrayBuffer();
+                const srcPdf = await PDFDocument.load(arrayBuffer);
+                const totalPages = srcPdf.getPageCount();
+
+                const indicesToCopy = [];
+                for (let i = 1; i <= totalPages; i++) {
+                    if (!pagesToRemove.includes(i)) {
+                        indicesToCopy.push(i - 1); // 0-based index for pdf-lib
+                    }
+                }
+
+                if (indicesToCopy.length === 0) {
+                    throw new Error("You cannot remove all pages!");
+                }
+
+                const newPdf = await PDFDocument.create();
+                const copiedPages = await newPdf.copyPages(srcPdf, indicesToCopy);
+                copiedPages.forEach(page => newPdf.addPage(page));
+
+                const pdfBytes = await newPdf.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                iframe.src = url;
+                iframe.style.display = "block";
+
+                triggerDownload(pdfBytes, 'Remaining_Pages.pdf');
+
+                status.textContent = "✅ Pages Removed!";
+                status.className = 'status success';
+                
+            } catch (error) {
+                status.textContent = error.message || "Error processing.";
+                status.className = 'status error';
+            } finally {
+                removeBtn.disabled = false;
+            }
+        });
+
+        document.getElementById('clearRemoveBtn').addEventListener('click', () => {
+            document.getElementById('removePdfInput').value = '';
+            document.getElementById('removePagesInput').value = '';
+            document.getElementById('removeStatus').textContent = '';
+            const iframe = document.getElementById('removePreview');
+            iframe.src = '';
+            iframe.style.display = 'none';
+        });
+
+        /* 6. ODD/EVEN PAGE SPLITTER */
+        async function processOddEven(isOdd) {
+            const input = document.getElementById('splitPdfInput');
+            const status = document.getElementById('splitStatus');
+            const iframe = document.getElementById('splitPreview');
+            const oddBtn = document.getElementById('oddBtn');
+            const evenBtn = document.getElementById('evenBtn');
+
+            if (input.files.length === 0) {
+                status.textContent = "Upload PDF first.";
+                status.className = 'status error';
+                return;
+            }
+
+            oddBtn.disabled = true;
+            evenBtn.disabled = true;
+            status.textContent = isOdd ? "Extracting Odd pages..." : "Extracting Even pages...";
+            status.className = 'status warning';
+            iframe.style.display = 'none';
+
+            try {
+                const arrayBuffer = await input.files[0].arrayBuffer();
+                const srcPdf = await PDFDocument.load(arrayBuffer);
+                const totalPages = srcPdf.getPageCount();
+
+                const indicesToCopy = [];
+                for (let i = 1; i <= totalPages; i++) {
+                    if (isOdd && i % 2 !== 0) indicesToCopy.push(i - 1);
+                    if (!isOdd && i % 2 === 0) indicesToCopy.push(i - 1);
+                }
+
+                if (indicesToCopy.length === 0) {
+                    throw new Error("No pages found for this selection.");
+                }
+
+                const newPdf = await PDFDocument.create();
+                const copiedPages = await newPdf.copyPages(srcPdf, indicesToCopy);
+                copiedPages.forEach(page => newPdf.addPage(page));
+
+                const pdfBytes = await newPdf.save();
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                iframe.src = url;
+                iframe.style.display = "block";
+
+                const filename = isOdd ? 'Odd_Pages.pdf' : 'Even_Pages.pdf';
+                triggerDownload(pdfBytes, filename);
+
+                status.textContent = `✅ ${isOdd ? 'Odd' : 'Even'} Pages Extracted!`;
+                status.className = 'status success';
+                
+            } catch (error) {
+                status.textContent = error.message || "Error processing.";
+                status.className = 'status error';
+            } finally {
+                oddBtn.disabled = false;
+                evenBtn.disabled = false;
+            }
+        }
+
+        document.getElementById('oddBtn').addEventListener('click', () => processOddEven(true));
+        document.getElementById('evenBtn').addEventListener('click', () => processOddEven(false));
+
+        document.getElementById('clearSplitBtn').addEventListener('click', () => {
+            document.getElementById('splitPdfInput').value = '';
+            document.getElementById('splitStatus').textContent = '';
+            const iframe = document.getElementById('splitPreview');
+            iframe.src = '';
+            iframe.style.display = 'none';
         });
 
     </script>
