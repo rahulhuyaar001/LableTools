@@ -4,11 +4,49 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Commerce All-in-One Operations Hub</title>
-    
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS CDN (Scoped to Auto-Merger tab to avoid overriding other tabs) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        corePlugins: {
+          preflight: false,
+        },
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace'],
+            },
+            colors: {
+              brand: {
+                50: '#eff6ff',
+                100: '#dbeafe',
+                500: '#2563eb',
+                600: '#1d4ed8',
+                700: '#1e40af',
+              },
+              flipkart: {
+                blue: '#2874f0',
+                yellow: '#ffe500',
+              }
+            }
+          }
+        }
+      };
+    </script>
+
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         * {
@@ -149,7 +187,9 @@
             line-height: 1.4;
         }
 
-        input[type="file"], input[type="text"], input[type="password"] {
+        .card input[type="file"],
+        .card input[type="text"],
+        #authOverlay input[type="password"] {
             width: 100%;
             padding: 9px 11px;
             margin-bottom: 12px;
@@ -160,7 +200,9 @@
             background-color: #f8fafc;
         }
 
-        input:focus, textarea:focus {
+        .card input:focus,
+        .card textarea:focus,
+        #authOverlay input:focus {
             outline: none;
             border-color: #3b82f6;
             background-color: #ffffff;
@@ -351,19 +393,19 @@
             margin-bottom: 20px;
         }
 
-        table {
+        .splitter-card table {
             width: 100%;
             border-collapse: collapse;
             background-color: #fff;
         }
 
-        th, td {
+        .splitter-card th, .splitter-card td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid #e2e8f0;
         }
 
-        th {
+        .splitter-card th {
             background-color: #f8fafc;
             color: #475569;
             font-weight: 600;
@@ -373,8 +415,8 @@
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
 
-        td { color: #1e293b; font-size: 14px; }
-        td.qty-highlight { font-weight: 700; color: #16a34a; font-size: 15px; }
+        .splitter-card td { color: #1e293b; font-size: 14px; }
+        .splitter-card td.qty-highlight { font-weight: 700; color: #16a34a; font-size: 15px; }
 
         .empty-state {
             text-align: center;
@@ -433,6 +475,16 @@
             cursor: pointer;
         }
         .btn-clear-list:hover { background-color: #b91c1c; }
+
+        /* ================= SECTION 4: AUTO-MERGER STYLES ================= */
+        .dropzone-active {
+            border-color: #2874f0 !important;
+            background-color: rgba(40, 116, 240, 0.06) !important;
+            transform: scale(1.005);
+        }
+        #autoMergerSection input[type="range"] {
+            accent-color: #2874f0;
+        }
     </style>
 </head>
 <body>
@@ -455,6 +507,7 @@
             <button class="tab-btn active" onclick="switchTab('pdfToolsTab', this)">1. PDF & Label Utilities</button>
             <button class="tab-btn" onclick="switchTab('labelModifierTab', this)">2. Multi-Platform Modifier</button>
             <button class="tab-btn" onclick="switchTab('orderSplitterTab', this)">3. Order Item Splitter</button>
+            <button class="tab-btn" onclick="switchTab('autoMergerTab', this)">4. Invoice + Slip Merger</button>
         </nav>
     </header>
 
@@ -650,6 +703,362 @@
             </div>
         </section>
 
+        <!-- =========================================================
+             TAB 4: INVOICE + SHIPPING LABEL AUTO-MERGER
+             ========================================================= -->
+        <section id="autoMergerTab" class="tab-section">
+            <div id="autoMergerSection" class="font-sans text-slate-800 dark:text-slate-100 space-y-6">
+
+                <!-- Sub-Header / Actions Bar -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 shrink-0">
+                            <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                                    Invoice + Order Slip Auto-Merger
+                                </h2>
+                                <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300">
+                                    Order ID Match
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Invoice ke niche blank space me matching Shipping Label automatically merge karein
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <button id="demoBtn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 dark:text-amber-300 dark:border-amber-800/60 transition cursor-pointer">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                            <span>Test Demo PDFs</span>
+                        </button>
+
+                        <button id="resetBtn" type="button" title="Clear all files" class="hidden inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 transition cursor-pointer">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            <span class="hidden sm:inline">Reset</span>
+                        </button>
+
+                        <button id="themeToggle" type="button" aria-label="Toggle theme" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition cursor-pointer">
+                            <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+                            <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Status Notification Banner (Replaces alert()) -->
+                <div id="toastBanner" class="hidden rounded-2xl p-4 border flex items-center justify-between gap-3 transition-all shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <i id="toastIcon" data-lucide="info" class="w-5 h-5 shrink-0"></i>
+                        <p id="toastMessage" class="text-sm font-medium"></p>
+                    </div>
+                    <button onclick="hideToast()" class="p-1 rounded-lg hover:bg-black/5 dark:hover:bg-white/10">
+                        <i data-lucide="x" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <!-- Step 1: Dual PDF Upload Dropzones -->
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <!-- Upload Card 1: Tax Invoices -->
+                    <div id="invoiceDropzone" class="relative group rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 sm:p-6 transition-all hover:border-blue-500 dark:hover:border-blue-500 shadow-sm cursor-pointer">
+                        <input id="invoiceInput" type="file" accept="application/pdf" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                <i data-lucide="file-text" class="w-6 h-6"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">Step 1 • Top Half</span>
+                                    <span id="invoiceBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                        0 Files
+                                    </span>
+                                </div>
+                                <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+                                    Upload Tax Invoice PDF(s)
+                                </h3>
+                                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                    Flipkart Tax Invoice PDF upload karein (jisme upar invoice aur niche khali jagah hoti hai). Multiple PDFs supported.
+                                </p>
+                                <div id="invoiceFileList" class="mt-3 flex flex-wrap gap-1.5"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upload Card 2: Shipping Labels / Order Slips -->
+                    <div id="labelDropzone" class="relative group rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 sm:p-6 transition-all hover:border-emerald-500 dark:hover:border-emerald-500 shadow-sm cursor-pointer">
+                        <input id="labelInput" type="file" accept="application/pdf" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                                <i data-lucide="tag" class="w-6 h-6"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Step 2 • Bottom Space</span>
+                                    <span id="labelBadge" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                        0 Files
+                                    </span>
+                                </div>
+                                <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-0.5">
+                                    Upload Order Slip / Label PDF(s)
+                                </h3>
+                                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                    Shipping Label / E-Kart Order Slip PDF upload karein. Order ID (<code class="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">OD...</code>) match karke invoice ke niche set hoga.
+                                </p>
+                                <div id="labelFileList" class="mt-3 flex flex-wrap gap-1.5"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Summary KPI Cards -->
+                <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Invoices</span>
+                            <span class="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+                                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                            </span>
+                        </div>
+                        <p id="statInvoices" class="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">0</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Pages scanned</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Order Slips</span>
+                            <span class="p-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
+                                <i data-lucide="qr-code" class="w-4 h-4"></i>
+                            </span>
+                        </div>
+                        <p id="statLabels" class="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">0</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Shipping labels found</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-emerald-200/80 dark:border-emerald-900/60 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-emerald-700 dark:text-emerald-400">Matched Pairs</span>
+                            <span class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                            </span>
+                        </div>
+                        <p id="statMatched" class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2">0</p>
+                        <p class="text-[11px] text-emerald-600/70 dark:text-emerald-400/70 mt-0.5">Ready to merge on 1 page</p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Unmatched Items</span>
+                            <span class="p-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+                                <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                            </span>
+                        </div>
+                        <p id="statUnmatched" class="text-2xl font-extrabold text-amber-600 dark:text-amber-400 mt-2">0</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">Missing slip or invoice</p>
+                    </div>
+                </section>
+
+                <!-- Workspace Split: Left = Controls & Match Table | Right = Live Merged A4 Preview -->
+                <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+                    <!-- Left Column (7 cols): Placement Adjustment Controls + Order ID Match Verification Table -->
+                    <div class="lg:col-span-7 space-y-6">
+
+                        <!-- Layout & Fine-Tuning Panel -->
+                        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-5">
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3.5">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="sliders-horizontal" class="w-4 h-4 text-blue-600"></i>
+                                    <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                                        Label Placement & Page Settings
+                                    </h3>
+                                </div>
+                                <button id="resetPlacementBtn" type="button" class="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 cursor-pointer">
+                                    Reset Default Position
+                                </button>
+                            </div>
+
+                            <!-- Layout Mode Selector -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label class="relative flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50 dark:has-[:checked]:bg-blue-950/30">
+                                    <input type="radio" name="layoutMode" value="a4-split" checked class="mt-1 accent-blue-600" />
+                                    <div>
+                                        <span class="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white">A4 Invoice + Bottom Label</span>
+                                        <span class="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Invoice upar rahega, Label niche khali space me fit hoga (Recommended)</span>
+                                    </div>
+                                </label>
+
+                                <label class="relative flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50 dark:has-[:checked]:bg-blue-950/30">
+                                    <input type="radio" name="layoutMode" value="4x6-dual" class="mt-1 accent-blue-600" />
+                                    <div>
+                                        <span class="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white">Compact Thermal / 4×6 Stack</span>
+                                        <span class="block text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">4×8 inch compact page par top invoice aur bottom shipping label</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Sliders for Fine Tuning -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between text-xs font-medium">
+                                        <span class="text-slate-600 dark:text-slate-300">Label Vertical Position (Y Offset)</span>
+                                        <span id="yOffsetVal" class="font-mono text-blue-600 dark:text-blue-400 font-semibold">24 pt</span>
+                                    </div>
+                                    <input id="yOffsetSlider" type="range" min="0" max="180" value="24" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer" />
+                                    <div class="flex justify-between text-[10px] text-slate-400">
+                                        <span>Bottom Edge (0)</span>
+                                        <span>Closer to Invoice (180)</span>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-1.5">
+                                    <div class="flex justify-between text-xs font-medium">
+                                        <span class="text-slate-600 dark:text-slate-300">Label Scale / Size (%)</span>
+                                        <span id="labelScaleVal" class="font-mono text-blue-600 dark:text-blue-400 font-semibold">95%</span>
+                                    </div>
+                                    <input id="labelScaleSlider" type="range" min="50" max="135" value="95" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer" />
+                                    <div class="flex justify-between text-[10px] text-slate-400">
+                                        <span>Smaller (50%)</span>
+                                        <span>Larger (135%)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Extra Options Toggles -->
+                            <div class="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                                <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                                    <input id="autoCropLabelToggle" type="checkbox" checked class="w-4 h-4 rounded accent-blue-600" />
+                                    <span class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Auto-trim blank whitespace around label
+                                    </span>
+                                </label>
+
+                                <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                                    <input id="drawCutLineToggle" type="checkbox" checked class="w-4 h-4 rounded accent-blue-600" />
+                                    <span class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Show dashed cut/fold line
+                                    </span>
+                                </label>
+
+                                <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                                    <input id="includeUnmatchedToggle" type="checkbox" class="w-4 h-4 rounded accent-blue-600" />
+                                    <span class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        Include unmatched invoices in PDF
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Match Verification Table -->
+                        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                            <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                                        Order ID Match Verification
+                                    </h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                        Har invoice page ka Order ID order slip se match kiya gaya hai
+                                    </p>
+                                </div>
+                                <div class="relative">
+                                    <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                                    <input id="searchOrderInput" type="text" placeholder="Search Order ID..." class="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 w-44 sm:w-52" />
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto max-h-[420px]">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-slate-50 dark:bg-slate-800/70 sticky top-0 z-10 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                                        <tr>
+                                            <th class="py-3 px-4">Order ID</th>
+                                            <th class="py-3 px-3">Customer / Item</th>
+                                            <th class="py-3 px-3 text-center">Pages</th>
+                                            <th class="py-3 px-4 text-right">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="matchTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 text-xs sm:text-sm">
+                                        <tr>
+                                            <td colspan="4" class="py-12 px-4 text-center text-slate-400">
+                                                <div class="flex flex-col items-center justify-center gap-2">
+                                                    <i data-lucide="layers" class="w-8 h-8 text-slate-300 dark:text-slate-600"></i>
+                                                    <p class="font-medium text-slate-600 dark:text-slate-300">Abhi koi PDF upload nahi hui hai</p>
+                                                    <p class="text-xs max-w-sm">Upar Tax Invoice aur Order Slip PDFs select karein, ya <strong>"Test Demo PDFs"</strong> par click karke live demo dekhein.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (5 cols): Live Merged A4 Preview & Download -->
+                    <div class="lg:col-span-5 lg:sticky lg:top-20 space-y-4">
+                        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm flex flex-col">
+                            <div class="flex items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <h3 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                                        Live Merged A4 Preview
+                                    </h3>
+                                </div>
+                                <span id="previewPageCounter" class="text-xs font-mono font-medium px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                                    0 Pages
+                                </span>
+                            </div>
+
+                            <!-- Preview Viewport -->
+                            <div class="relative mt-4 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 overflow-hidden flex items-center justify-center min-h-[460px] sm:min-h-[520px]">
+                                <div id="previewLoader" class="hidden absolute inset-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs z-20 flex flex-col items-center justify-center gap-2">
+                                    <div class="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    <p class="text-xs font-semibold text-slate-700 dark:text-slate-200">Merging & Generating PDF...</p>
+                                </div>
+
+                                <div id="emptyPreviewBox" class="p-6 text-center space-y-3 max-w-xs">
+                                    <div class="mx-auto w-28 h-36 rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-2 flex flex-col justify-between shadow-xs">
+                                        <div class="h-14 rounded bg-blue-100/80 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-[10px] font-bold text-blue-700 dark:text-blue-300">
+                                            TAX INVOICE
+                                        </div>
+                                        <div class="border-t border-dashed border-slate-300 dark:border-slate-700"></div>
+                                        <div class="h-14 rounded bg-emerald-100/80 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                                            ORDER SLIP / LABEL
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                        Upar Tax Invoice aur niche uska matching Shipping Label ek hi A4 page par dikhega.
+                                    </p>
+                                </div>
+
+                                <iframe id="pdfPreviewFrame" class="hidden w-full h-[520px] border-0" title="Merged PDF Preview"></iframe>
+                            </div>
+
+                            <!-- Primary Download CTA -->
+                            <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-2.5">
+                                <button id="downloadBtn" type="button" disabled class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold text-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 dark:disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed shadow-md shadow-blue-600/20 disabled:shadow-none transition cursor-pointer">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                    <span>Download Merged PDF</span>
+                                </button>
+
+                                <button id="openNewTabBtn" type="button" disabled title="Open PDF in New Tab for Printing" class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                    <span class="sm:hidden">Print / Open</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- Private Footer Note -->
+                <div class="border-t border-slate-200 dark:border-slate-800 pt-4 text-xs text-slate-500 dark:text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <p>100% Private & Client-Side — Aapki PDF files browser se bahar kisi server par upload nahi hoti.</p>
+                    <p>Built with PDF.js & PDF-lib</p>
+                </div>
+
+            </div>
+        </section>
+
     </main>
 
     <script>
@@ -722,7 +1131,7 @@
            SECTION 1: PDF TOOLS SCRIPT
            ========================================== */
         const { PDFDocument, rgb, StandardFonts } = PDFLib;
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
         function triggerDownload(fileBytes, filename) {
             const blob = new Blob([fileBytes], { type: 'application/pdf' });
@@ -1573,6 +1982,713 @@
 
             XLSX.writeFile(workbook, "Final_Separated_Orders.xlsx");
         }
+
+        /* ==========================================
+           SECTION 4: INVOICE + SHIPPING LABEL AUTO-MERGER SCRIPT
+           ========================================== */
+        lucide.createIcons();
+
+        const mergerState = {
+            invoiceFiles: [],
+            labelFiles: [],
+            invoices: [],
+            labels: [],
+            records: [],
+            mergedPdfBytes: null,
+            mergedBlobUrl: null,
+            settings: {
+                layoutMode: 'a4-split',
+                yOffset: 24,
+                labelScale: 95,
+                autoCropLabel: true,
+                drawCutLine: true,
+                includeUnmatched: false
+            }
+        };
+
+        const mergerEls = {
+            invoiceDropzone: document.getElementById('invoiceDropzone'),
+            labelDropzone: document.getElementById('labelDropzone'),
+            invoiceInput: document.getElementById('invoiceInput'),
+            labelInput: document.getElementById('labelInput'),
+            invoiceBadge: document.getElementById('invoiceBadge'),
+            labelBadge: document.getElementById('labelBadge'),
+            invoiceFileList: document.getElementById('invoiceFileList'),
+            labelFileList: document.getElementById('labelFileList'),
+            statInvoices: document.getElementById('statInvoices'),
+            statLabels: document.getElementById('statLabels'),
+            statMatched: document.getElementById('statMatched'),
+            statUnmatched: document.getElementById('statUnmatched'),
+            matchTableBody: document.getElementById('matchTableBody'),
+            searchOrderInput: document.getElementById('searchOrderInput'),
+            yOffsetSlider: document.getElementById('yOffsetSlider'),
+            yOffsetVal: document.getElementById('yOffsetVal'),
+            labelScaleSlider: document.getElementById('labelScaleSlider'),
+            labelScaleVal: document.getElementById('labelScaleVal'),
+            autoCropLabelToggle: document.getElementById('autoCropLabelToggle'),
+            drawCutLineToggle: document.getElementById('drawCutLineToggle'),
+            includeUnmatchedToggle: document.getElementById('includeUnmatchedToggle'),
+            resetPlacementBtn: document.getElementById('resetPlacementBtn'),
+            previewLoader: document.getElementById('previewLoader'),
+            emptyPreviewBox: document.getElementById('emptyPreviewBox'),
+            pdfPreviewFrame: document.getElementById('pdfPreviewFrame'),
+            previewPageCounter: document.getElementById('previewPageCounter'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            openNewTabBtn: document.getElementById('openNewTabBtn'),
+            demoBtn: document.getElementById('demoBtn'),
+            resetBtn: document.getElementById('resetBtn'),
+            themeToggle: document.getElementById('themeToggle'),
+            toastBanner: document.getElementById('toastBanner'),
+            toastMessage: document.getElementById('toastMessage'),
+            toastIcon: document.getElementById('toastIcon')
+        };
+
+        mergerEls.themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        function showToast(message, type = 'info') {
+            const styles = {
+                info: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950/60 dark:border-blue-800 dark:text-blue-200',
+                success: 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950/60 dark:border-emerald-800 dark:text-emerald-200',
+                warning: 'bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/60 dark:border-amber-800 dark:text-amber-200',
+                error: 'bg-rose-50 border-rose-200 text-rose-800 dark:bg-rose-950/60 dark:border-rose-800 dark:text-rose-200'
+            };
+            const icons = {
+                info: 'info',
+                success: 'check-circle-2',
+                warning: 'alert-triangle',
+                error: 'x-circle'
+            };
+            mergerEls.toastBanner.className = `rounded-2xl p-4 border flex items-center justify-between gap-3 transition-all shadow-sm ${styles[type] || styles.info}`;
+            mergerEls.toastMessage.textContent = message;
+            mergerEls.toastIcon.setAttribute('data-lucide', icons[type] || 'info');
+            mergerEls.toastBanner.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function hideToast() {
+            mergerEls.toastBanner.classList.add('hidden');
+        }
+
+        ['dragenter', 'dragover'].forEach(evtName => {
+            mergerEls.invoiceDropzone.addEventListener(evtName, () => mergerEls.invoiceDropzone.classList.add('dropzone-active'));
+            mergerEls.labelDropzone.addEventListener(evtName, () => mergerEls.labelDropzone.classList.add('dropzone-active'));
+        });
+        ['dragleave', 'drop'].forEach(evtName => {
+            mergerEls.invoiceDropzone.addEventListener(evtName, () => mergerEls.invoiceDropzone.classList.remove('dropzone-active'));
+            mergerEls.labelDropzone.addEventListener(evtName, () => mergerEls.labelDropzone.classList.remove('dropzone-active'));
+        });
+
+        function parsePageMetadata(text) {
+            const cleanText = text.replace(/\s+/g, ' ').trim();
+
+            let orderMatch = cleanText.match(/\b(OD\d{14,22})\b/i);
+
+            if (!orderMatch) {
+                orderMatch = cleanText.match(/Order\s*(?:Id|ID|No|Number)[:\s#-]*([A-Z0-9-]{8,25})/i);
+            }
+
+            const orderId = orderMatch ? orderMatch[1].toUpperCase() : null;
+
+            let customer = '';
+            const nameMatch =
+                cleanText.match(/Shipping\/Customer address:\s*Name:\s*([^,]+)/i) ||
+                cleanText.match(/Shipping ADDRESS\s*([A-Za-z\s.]{3,35}),/i) ||
+                cleanText.match(/Billing Address\s*([A-Za-z\s.]{3,35}),/i) ||
+                cleanText.match(/Name:\s*([^,]+)/i);
+
+            if (nameMatch && nameMatch[1]) {
+                customer = nameMatch[1].replace(/Priya Dharshini R,\s*Priya Dharshini R/i, 'Priya Dharshini R').trim();
+                if (customer.length > 32) customer = customer.slice(0, 32) + '…';
+            }
+
+            let sku = '';
+            const skuMatch =
+                cleanText.match(/SKU ID\s+([^\n|]+?)(?:\s+QTY|\s+\|)/i) ||
+                cleanText.match(/\|\s*([a-zA-Z0-9_.-]+)\s*\|/) ||
+                cleanText.match(/Product\s+Description.*?\|\s*([^|]{5,45})/i);
+
+            if (skuMatch && skuMatch[1]) {
+                sku = skuMatch[1].trim();
+                if (sku.length > 34) sku = sku.slice(0, 34) + '…';
+            }
+
+            return { orderId, customer, sku, rawText: cleanText };
+        }
+
+        async function processPdfFiles(fileList, type) {
+            const parsedPages = [];
+            const storedFiles = [];
+
+            for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
+                const file = fileList[fIdx];
+                const arrayBuffer = await file.arrayBuffer();
+                const bytes = new Uint8Array(arrayBuffer);
+                storedFiles.push({ name: file.name, bytes });
+
+                const loadingTask = pdfjsLib.getDocument({ data: bytes.slice() });
+                const pdfDoc = await loadingTask.promise;
+
+                for (let pNum = 1; pNum <= pdfDoc.numPages; pNum++) {
+                    const page = await pdfDoc.getPage(pNum);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    const meta = parsePageMetadata(pageText);
+
+                    parsedPages.push({
+                        orderId: meta.orderId || `UNKNOWN_${type.toUpperCase()}_F${fIdx + 1}_P${pNum}`,
+                        hasValidOrderId: Boolean(meta.orderId),
+                        fileIndex: fIdx,
+                        fileName: file.name,
+                        pageIndex: pNum - 1,
+                        pageNumber: pNum,
+                        customer: meta.customer,
+                        sku: meta.sku,
+                        rawText: meta.rawText
+                    });
+                }
+            }
+
+            return { storedFiles, parsedPages };
+        }
+
+        mergerEls.invoiceInput.addEventListener('change', async (e) => {
+            if (!e.target.files || e.target.files.length === 0) return;
+            try {
+                mergerEls.previewLoader.classList.remove('hidden');
+                const { storedFiles, parsedPages } = await processPdfFiles(e.target.files, 'inv');
+                mergerState.invoiceFiles = storedFiles;
+                mergerState.invoices = parsedPages;
+                renderFileBadges();
+                await runMatchingAndMerge();
+            } catch (err) {
+                console.error(err);
+                showToast('Tax Invoice PDF read karne me error aaya. Kripya valid PDF select karein.', 'error');
+            } finally {
+                mergerEls.previewLoader.classList.add('hidden');
+            }
+        });
+
+        mergerEls.labelInput.addEventListener('change', async (e) => {
+            if (!e.target.files || e.target.files.length === 0) return;
+            try {
+                mergerEls.previewLoader.classList.remove('hidden');
+                const { storedFiles, parsedPages } = await processPdfFiles(e.target.files, 'lbl');
+                mergerState.labelFiles = storedFiles;
+                mergerState.labels = parsedPages;
+                renderFileBadges();
+                await runMatchingAndMerge();
+            } catch (err) {
+                console.error(err);
+                showToast('Shipping Label PDF read karne me error aaya. Kripya valid PDF select karein.', 'error');
+            } finally {
+                mergerEls.previewLoader.classList.add('hidden');
+            }
+        });
+
+        function renderFileBadges() {
+            mergerEls.invoiceBadge.textContent = `${mergerState.invoiceFiles.length} File${mergerState.invoiceFiles.length === 1 ? '' : 's'} (${mergerState.invoices.length} pg)`;
+            mergerEls.labelBadge.textContent = `${mergerState.labelFiles.length} File${mergerState.labelFiles.length === 1 ? '' : 's'} (${mergerState.labels.length} pg)`;
+
+            mergerEls.invoiceFileList.innerHTML = mergerState.invoiceFiles.map(f => `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/70 dark:border-blue-800/70 truncate max-w-[200px]">
+                    <i data-lucide="file" class="w-3 h-3 shrink-0"></i> ${f.name}
+                </span>
+            `).join('');
+
+            mergerEls.labelFileList.innerHTML = mergerState.labelFiles.map(f => `
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800/70 truncate max-w-[200px]">
+                    <i data-lucide="file" class="w-3 h-3 shrink-0"></i> ${f.name}
+                </span>
+            `).join('');
+
+            if (mergerState.invoiceFiles.length > 0 || mergerState.labelFiles.length > 0) {
+                mergerEls.resetBtn.classList.remove('hidden');
+            } else {
+                mergerEls.resetBtn.classList.add('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function buildMatchRecords() {
+            const labelMap = new Map();
+            mergerState.labels.forEach(lbl => {
+                if (!labelMap.has(lbl.orderId)) {
+                    labelMap.set(lbl.orderId, []);
+                }
+                labelMap.get(lbl.orderId).push(lbl);
+            });
+
+            const usedLabels = new Set();
+            const records = [];
+
+            mergerState.invoices.forEach(inv => {
+                const matchingLabels = labelMap.get(inv.orderId) || [];
+                let matchedLbl = matchingLabels.find(l => !usedLabels.has(l)) || matchingLabels[0] || null;
+                if (matchedLbl) usedLabels.add(matchedLbl);
+
+                records.push({
+                    orderId: inv.orderId,
+                    hasValidOrderId: inv.hasValidOrderId,
+                    invoice: inv,
+                    label: matchedLbl,
+                    customer: (matchedLbl && matchedLbl.customer) || inv.customer || '—',
+                    sku: (matchedLbl && matchedLbl.sku) || inv.sku || '—',
+                    status: matchedLbl ? 'matched' : 'missing-label'
+                });
+            });
+
+            mergerState.labels.forEach(lbl => {
+                if (!usedLabels.has(lbl)) {
+                    records.push({
+                        orderId: lbl.orderId,
+                        hasValidOrderId: lbl.hasValidOrderId,
+                        invoice: null,
+                        label: lbl,
+                        customer: lbl.customer || '—',
+                        sku: lbl.sku || '—',
+                        status: 'missing-invoice'
+                    });
+                }
+            });
+
+            mergerState.records = records;
+        }
+
+        function updateDashboardUI() {
+            const matchedCount = mergerState.records.filter(r => r.status === 'matched').length;
+            const unmatchedCount = mergerState.records.filter(r => r.status !== 'matched').length;
+
+            mergerEls.statInvoices.textContent = mergerState.invoices.length;
+            mergerEls.statLabels.textContent = mergerState.labels.length;
+            mergerEls.statMatched.textContent = matchedCount;
+            mergerEls.statUnmatched.textContent = unmatchedCount;
+
+            renderMatchTable();
+        }
+
+        function renderMatchTable() {
+            const query = mergerEls.searchOrderInput.value.trim().toUpperCase();
+            const filtered = mergerState.records.filter(r =>
+                !query ||
+                r.orderId.toUpperCase().includes(query) ||
+                r.customer.toUpperCase().includes(query) ||
+                r.sku.toUpperCase().includes(query)
+            );
+
+            if (filtered.length === 0) {
+                mergerEls.matchTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="py-10 px-4 text-center text-slate-400 text-xs">
+                            ${mergerState.records.length === 0
+                                ? 'Upload Tax Invoice PDF aur Order Slip PDF to start matching.'
+                                : 'Koi matching Order ID nahi mila.'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            mergerEls.matchTableBody.innerHTML = filtered.map(rec => {
+                let badgeHtml = '';
+                if (rec.status === 'matched') {
+                    badgeHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        <i data-lucide="check" class="w-3 h-3"></i> Matched
+                    </span>`;
+                } else if (rec.status === 'missing-label') {
+                    badgeHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        <i data-lucide="clock" class="w-3 h-3"></i> Slip Missing
+                    </span>`;
+                } else {
+                    badgeHtml = `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/70 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                        <i data-lucide="file-x" class="w-3 h-3"></i> Invoice Missing
+                    </span>`;
+                }
+
+                const invPg = rec.invoice ? `Inv #${rec.invoice.pageNumber}` : '—';
+                const lblPg = rec.label ? `Slip #${rec.label.pageNumber}` : '—';
+
+                return `
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                        <td class="py-3 px-4 font-mono text-xs font-semibold text-slate-900 dark:text-slate-100">
+                            ${rec.orderId}
+                        </td>
+                        <td class="py-3 px-3">
+                            <div class="font-medium text-slate-800 dark:text-slate-200 text-xs truncate max-w-[170px]">${rec.customer}</div>
+                            <div class="text-[11px] text-slate-400 truncate max-w-[170px]">${rec.sku}</div>
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <span class="inline-block px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[11px] font-mono text-slate-600 dark:text-slate-300">
+                                ${invPg} • ${lblPg}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right">
+                            ${badgeHtml}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        async function generateMergedPdf() {
+            const { PDFDocument, rgb } = PDFLib;
+
+            const recordsToRender = mergerState.records.filter(r =>
+                r.status === 'matched' || (mergerState.settings.includeUnmatched && r.invoice)
+            );
+
+            if (recordsToRender.length === 0) {
+                mergerState.mergedPdfBytes = null;
+                if (mergerState.mergedBlobUrl) URL.revokeObjectURL(mergerState.mergedBlobUrl);
+                mergerState.mergedBlobUrl = null;
+                mergerEls.pdfPreviewFrame.classList.add('hidden');
+                mergerEls.emptyPreviewBox.classList.remove('hidden');
+                mergerEls.previewPageCounter.textContent = '0 Pages';
+                mergerEls.downloadBtn.disabled = true;
+                mergerEls.openNewTabBtn.disabled = true;
+                return;
+            }
+
+            mergerEls.previewLoader.classList.remove('hidden');
+
+            try {
+                const outPdf = await PDFDocument.create();
+
+                const loadedInvoiceDocs = await Promise.all(
+                    mergerState.invoiceFiles.map(f => PDFDocument.load(f.bytes))
+                );
+                const loadedLabelDocs = await Promise.all(
+                    mergerState.labelFiles.map(f => PDFDocument.load(f.bytes))
+                );
+
+                const isCompact = mergerState.settings.layoutMode === '4x6-dual';
+                const PAGE_W = isCompact ? 288 : 595.28;
+                const PAGE_H = isCompact ? 576 : 841.89;
+
+                for (const rec of recordsToRender) {
+                    const newPage = outPdf.addPage([PAGE_W, PAGE_H]);
+
+                    const srcInvDoc = loadedInvoiceDocs[rec.invoice.fileIndex];
+                    const srcInvPage = srcInvDoc.getPage(rec.invoice.pageIndex);
+                    const invSize = srcInvPage.getSize();
+
+                    const embeddedInvoice = await outPdf.embedPage(srcInvPage);
+                    const invScale = Math.min(PAGE_W / invSize.width, PAGE_H / invSize.height);
+                    const drawnInvW = invSize.width * invScale;
+                    const drawnInvH = invSize.height * invScale;
+
+                    newPage.drawPage(embeddedInvoice, {
+                        x: (PAGE_W - drawnInvW) / 2,
+                        y: PAGE_H - drawnInvH,
+                        width: drawnInvW,
+                        height: drawnInvH
+                    });
+
+                    if (rec.label) {
+                        const srcLblDoc = loadedLabelDocs[rec.label.fileIndex];
+                        const srcLblPage = srcLblDoc.getPage(rec.label.pageIndex);
+                        const lblBox = srcLblPage.getCropBox() || srcLblPage.getMediaBox();
+
+                        let cropRect = undefined;
+                        if (mergerState.settings.autoCropLabel && lblBox.width > 500 && lblBox.height > 700) {
+                            cropRect = {
+                                left: lblBox.x + 120,
+                                bottom: lblBox.y + lblBox.height - 445,
+                                right: lblBox.x + lblBox.width - 120,
+                                top: lblBox.y + lblBox.height - 15
+                            };
+                        }
+
+                        const embeddedLabel = await outPdf.embedPage(srcLblPage, cropRect);
+                        const embDims = embeddedLabel.scale(1);
+
+                        const maxAvailHeight = PAGE_H * 0.46;
+                        const maxAvailWidth = PAGE_W - 48;
+
+                        const baseFitScale = Math.min(
+                            maxAvailWidth / embDims.width,
+                            maxAvailHeight / embDims.height
+                        );
+
+                        const userScaleFactor = mergerState.settings.labelScale / 100;
+                        const finalScale = baseFitScale * userScaleFactor;
+
+                        const finalLblW = embDims.width * finalScale;
+                        const finalLblH = embDims.height * finalScale;
+
+                        const lblX = (PAGE_W - finalLblW) / 2;
+                        const lblY = mergerState.settings.yOffset;
+
+                        if (mergerState.settings.drawCutLine) {
+                            const lineY = Math.min(PAGE_H * 0.50, lblY + finalLblH + 12);
+                            newPage.drawLine({
+                                start: { x: 24, y: lineY },
+                                end: { x: PAGE_W - 24, y: lineY },
+                                thickness: 0.75,
+                                color: rgb(0.65, 0.7, 0.78),
+                                dashArray: [4, 4]
+                            });
+                        }
+
+                        newPage.drawPage(embeddedLabel, {
+                            x: lblX,
+                            y: lblY,
+                            width: finalLblW,
+                            height: finalLblH
+                        });
+                    }
+                }
+
+                const pdfBytes = await outPdf.save();
+                mergerState.mergedPdfBytes = pdfBytes;
+
+                if (mergerState.mergedBlobUrl) URL.revokeObjectURL(mergerState.mergedBlobUrl);
+                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                mergerState.mergedBlobUrl = URL.createObjectURL(blob);
+
+                mergerEls.emptyPreviewBox.classList.add('hidden');
+                mergerEls.pdfPreviewFrame.classList.remove('hidden');
+                mergerEls.pdfPreviewFrame.src = mergerState.mergedBlobUrl + '#toolbar=1&navpanes=0&view=FitH';
+                mergerEls.previewPageCounter.textContent = `${recordsToRender.length} Page${recordsToRender.length === 1 ? '' : 's'}`;
+                mergerEls.downloadBtn.disabled = false;
+                mergerEls.openNewTabBtn.disabled = false;
+            } catch (err) {
+                console.error('Merge error:', err);
+                showToast('PDF merge karte samay technical error aaya: ' + err.message, 'error');
+            } finally {
+                mergerEls.previewLoader.classList.add('hidden');
+            }
+        }
+
+        async function runMatchingAndMerge() {
+            buildMatchRecords();
+            updateDashboardUI();
+            await generateMergedPdf();
+
+            const matched = mergerState.records.filter(r => r.status === 'matched').length;
+            if (mergerState.invoices.length > 0 && mergerState.labels.length > 0) {
+                if (matched > 0) {
+                    showToast(`${matched} Order ID${matched > 1 ? 's' : ''} successfully match ho gaye aur invoice ke niche merge ho gaye!`, 'success');
+                } else {
+                    showToast('Uploaded Invoice aur Order Slip me koi common Order ID match nahi hua.', 'warning');
+                }
+            }
+        }
+
+        mergerEls.yOffsetSlider.addEventListener('input', (e) => {
+            mergerState.settings.yOffset = Number(e.target.value);
+            mergerEls.yOffsetVal.textContent = `${mergerState.settings.yOffset} pt`;
+        });
+        mergerEls.yOffsetSlider.addEventListener('change', generateMergedPdf);
+
+        mergerEls.labelScaleSlider.addEventListener('input', (e) => {
+            mergerState.settings.labelScale = Number(e.target.value);
+            mergerEls.labelScaleVal.textContent = `${mergerState.settings.labelScale}%`;
+        });
+        mergerEls.labelScaleSlider.addEventListener('change', generateMergedPdf);
+
+        document.querySelectorAll('#autoMergerSection input[name="layoutMode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                mergerState.settings.layoutMode = e.target.value;
+                generateMergedPdf();
+            });
+        });
+
+        mergerEls.autoCropLabelToggle.addEventListener('change', (e) => {
+            mergerState.settings.autoCropLabel = e.target.checked;
+            generateMergedPdf();
+        });
+
+        mergerEls.drawCutLineToggle.addEventListener('change', (e) => {
+            mergerState.settings.drawCutLine = e.target.checked;
+            generateMergedPdf();
+        });
+
+        mergerEls.includeUnmatchedToggle.addEventListener('change', (e) => {
+            mergerState.settings.includeUnmatched = e.target.checked;
+            generateMergedPdf();
+        });
+
+        mergerEls.resetPlacementBtn.addEventListener('click', () => {
+            mergerState.settings.yOffset = 24;
+            mergerState.settings.labelScale = 95;
+            mergerEls.yOffsetSlider.value = 24;
+            mergerEls.yOffsetVal.textContent = '24 pt';
+            mergerEls.labelScaleSlider.value = 95;
+            mergerEls.labelScaleVal.textContent = '95%';
+            generateMergedPdf();
+        });
+
+        mergerEls.searchOrderInput.addEventListener('input', renderMatchTable);
+
+        mergerEls.downloadBtn.addEventListener('click', () => {
+            if (!mergerState.mergedBlobUrl) return;
+            const a = document.createElement('a');
+            const timestamp = new Date().toISOString().slice(0, 10);
+            a.href = mergerState.mergedBlobUrl;
+            a.download = `Flipkart_Merged_Invoice_Labels_${timestamp}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+
+        mergerEls.openNewTabBtn.addEventListener('click', () => {
+            if (!mergerState.mergedBlobUrl) return;
+            window.open(mergerState.mergedBlobUrl, '_blank');
+        });
+
+        mergerEls.resetBtn.addEventListener('click', () => {
+            mergerState.invoiceFiles = [];
+            mergerState.labelFiles = [];
+            mergerState.invoices = [];
+            mergerState.labels = [];
+            mergerState.records = [];
+            mergerEls.invoiceInput.value = '';
+            mergerEls.labelInput.value = '';
+            renderFileBadges();
+            updateDashboardUI();
+            generateMergedPdf();
+            hideToast();
+        });
+
+        mergerEls.demoBtn.addEventListener('click', async () => {
+            try {
+                mergerEls.previewLoader.classList.remove('hidden');
+                const { PDFDocument, StandardFonts, rgb } = PDFLib;
+
+                const orders = [
+                    {
+                        orderId: 'OD439174619685063100',
+                        invoiceNo: 'NUABHF4270001660',
+                        customer: 'Priya Dharshini R',
+                        address: 'No:6, CG Colony, 7th Street, Tondiarpet, Chennai - 600081, IN-TN',
+                        sku: '25_tadkapan_ | Dozy 11cm Hard Anodized Tadka Pan',
+                        price: '115.00',
+                        awb: 'FMPP4472936655'
+                    },
+                    {
+                        orderId: 'OD439191824419433100',
+                        invoiceNo: 'NUABHF4270001661',
+                        customer: 'K KIRUTHIKA',
+                        address: '14, 9th cross Street, Dhanalakshmi Nagar, Chennai - 600095, IN-TN',
+                        sku: '124no._bartan | Dozy Premium 22cm Nonstick Tawa',
+                        price: '249.00',
+                        awb: 'FMPP4472939912'
+                    }
+                ];
+
+                const invPdf = await PDFDocument.create();
+                const fontBold = await invPdf.embedFont(StandardFonts.HelveticaBold);
+                const fontReg = await invPdf.embedFont(StandardFonts.Helvetica);
+
+                for (const ord of orders) {
+                    const page = invPdf.addPage([595.28, 841.89]);
+                    const H = 841.89;
+
+                    page.drawText('Tax Invoice', { x: 250, y: H - 35, size: 13, font: fontBold });
+                    page.drawText('Sold By: Ridhisidhi enterprises,', { x: 35, y: H - 58, size: 9, font: fontBold });
+                    page.drawText('BASEMENT IN PROPERTY NO.3 POCKET-8A SECTOR 15 ROHINI, NEW DELHI - 110089', { x: 35, y: H - 72, size: 7.5, font: fontReg });
+                    page.drawText('GST: 07CMYPJ9742E1ZE', { x: 35, y: H - 84, size: 8, font: fontBold });
+
+                    page.drawText(`Order Id: ${ord.orderId}`, { x: 35, y: H - 108, size: 9.5, font: fontBold });
+                    page.drawText('Order Date: 17-11-2026, 10:18 AM', { x: 35, y: H - 122, size: 8, font: fontReg });
+                    page.drawText(`Invoice No: ${ord.invoiceNo}`, { x: 360, y: H - 108, size: 9, font: fontBold });
+                    page.drawText('Invoice Date: 17-11-2026, 10:24 AM', { x: 360, y: H - 122, size: 8, font: fontReg });
+
+                    page.drawText('Billing & Shipping ADDRESS:', { x: 35, y: H - 148, size: 8.5, font: fontBold });
+                    page.drawText(`${ord.customer},`, { x: 35, y: H - 161, size: 8.5, font: fontBold });
+                    page.drawText(ord.address, { x: 35, y: H - 174, size: 8, font: fontReg });
+
+                    page.drawRectangle({
+                        x: 35,
+                        y: H - 255,
+                        width: 525,
+                        height: 62,
+                        borderColor: rgb(0.75, 0.75, 0.75),
+                        borderWidth: 0.8
+                    });
+                    page.drawLine({ start: { x: 35, y: H - 213 }, end: { x: 560, y: H - 213 }, thickness: 0.8, color: rgb(0.75, 0.75, 0.75) });
+                    page.drawText('Product Description                                              Qty       Gross       Total (INR)', { x: 42, y: H - 205, size: 8, font: fontBold });
+                    page.drawText(`${ord.sku}                 1          ${ord.price}        ${ord.price}`, { x: 42, y: H - 232, size: 8, font: fontReg });
+
+                    page.drawText(`TOTAL PRICE: INR ${ord.price}   |   TOTAL QTY: 1`, { x: 340, y: H - 275, size: 9.5, font: fontBold });
+                    page.drawText('Ordered Through Flipkart', { x: 35, y: H - 315, size: 9, font: fontBold });
+                    page.drawText('Ridhisidhi enterprises - Authorized Signature', { x: 360, y: H - 315, size: 8.5, font: fontReg });
+                    page.drawLine({ start: { x: 35, y: H - 332 }, end: { x: 560, y: H - 332 }, thickness: 0.6, color: rgb(0.85, 0.85, 0.85) });
+                }
+
+                const lblPdf = await PDFDocument.create();
+                const lFontBold = await lblPdf.embedFont(StandardFonts.HelveticaBold);
+                const lFontReg = await lblPdf.embedFont(StandardFonts.Helvetica);
+
+                for (const ord of [...orders].reverse()) {
+                    const page = lblPdf.addPage([288, 396]);
+                    page.drawRectangle({ x: 8, y: 8, width: 272, height: 380, borderColor: rgb(0.1, 0.1, 0.1), borderWidth: 1.5 });
+
+                    page.drawText('STD   E-Kart Logistics', { x: 18, y: 365, size: 11, font: lFontBold });
+                    page.drawLine({ start: { x: 8, y: 355 }, end: { x: 280, y: 355 }, thickness: 1 });
+
+                    page.drawText(`${ord.orderId}   PREPAID`, { x: 18, y: 336, size: 9.5, font: lFontBold });
+                    page.drawText('Ordered through Flipkart', { x: 18, y: 320, size: 8.5, font: lFontReg });
+                    page.drawLine({ start: { x: 8, y: 310 }, end: { x: 280, y: 310 }, thickness: 1 });
+
+                    page.drawText(`AWB No. ${ord.awb}`, { x: 82, y: 294, size: 10, font: lFontBold });
+                    for (let bx = 35; bx < 250; bx += 4) {
+                        page.drawRectangle({
+                            x: bx,
+                            y: 252,
+                            width: (bx % 8 === 0) ? 2.5 : 1.2,
+                            height: 36,
+                            color: rgb(0, 0, 0)
+                        });
+                    }
+                    page.drawLine({ start: { x: 8, y: 242 }, end: { x: 280, y: 242 }, thickness: 1 });
+
+                    page.drawText('Shipping/Customer address:', { x: 18, y: 226, size: 8.5, font: lFontBold });
+                    page.drawText(`Name: ${ord.customer},`, { x: 18, y: 212, size: 9.5, font: lFontBold });
+                    page.drawText(ord.address.slice(0, 44), { x: 18, y: 198, size: 8, font: lFontReg });
+                    page.drawText(ord.address.slice(44), { x: 18, y: 186, size: 8, font: lFontReg });
+                    page.drawLine({ start: { x: 8, y: 172 }, end: { x: 280, y: 172 }, thickness: 1 });
+
+                    page.drawText('Sold By: Ridhisidhi enterprises, Rohini, New Delhi - 110089', { x: 18, y: 158, size: 7.5, font: lFontReg });
+                    page.drawText('GSTIN: 07CMYPJ9742E1ZE', { x: 18, y: 146, size: 8, font: lFontBold });
+                    page.drawLine({ start: { x: 8, y: 136 }, end: { x: 280, y: 136 }, thickness: 1 });
+
+                    page.drawText('SKU ID                                                         QTY', { x: 18, y: 122, size: 8, font: lFontBold });
+                    page.drawText(`${ord.sku.slice(0, 38)}            1`, { x: 18, y: 106, size: 8, font: lFontReg });
+                    page.drawLine({ start: { x: 8, y: 92 }, end: { x: 280, y: 92 }, thickness: 1 });
+
+                    page.drawText(ord.awb, { x: 96, y: 40, size: 10, font: lFontBold });
+                    page.drawText('Not for resale. Printed via Auto-Merger', { x: 18, y: 18, size: 7.5, font: lFontReg });
+                }
+
+                const invBytes = await invPdf.save();
+                const lblBytes = await lblPdf.save();
+
+                const invFile = new File([invBytes], 'Demo_Flipkart_Invoices.pdf', { type: 'application/pdf' });
+                const lblFile = new File([lblBytes], 'Demo_EKart_Order_Slips.pdf', { type: 'application/pdf' });
+
+                const invRes = await processPdfFiles([invFile], 'inv');
+                const lblRes = await processPdfFiles([lblFile], 'lbl');
+
+                mergerState.invoiceFiles = invRes.storedFiles;
+                mergerState.invoices = invRes.parsedPages;
+                mergerState.labelFiles = lblRes.storedFiles;
+                mergerState.labels = lblRes.parsedPages;
+
+                renderFileBadges();
+                await runMatchingAndMerge();
+                showToast('Demo Invoice aur Shipping Label load & merge ho gaye! Ab aap apni asli PDFs upload kar sakte hain.', 'success');
+            } catch (err) {
+                console.error(err);
+                showToast('Demo PDF generate karne me error aaya.', 'error');
+            } finally {
+                mergerEls.previewLoader.classList.add('hidden');
+            }
+        });
     </script>
 </body>
 </html>
