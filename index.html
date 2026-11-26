@@ -485,6 +485,98 @@
         #autoMergerSection input[type="range"] {
             accent-color: #2874f0;
         }
+
+        /* ================= SECTION 5: UNIVERSAL EXTRACTOR STYLES ================= */
+        .sba-extractor-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 70vh;
+            padding: 20px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .sba-page-title {
+            font-size: 30px;
+            margin-bottom: 26px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .sba-tools-wrapper {
+            display: flex;
+            justify-content: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .sba-tool-card {
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.15);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            width: 100%;
+            border-top: 5px solid #00d2ff;
+        }
+
+        .sba-tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+
+        .sba-tool-card h1 {
+            margin-top: 0; margin-bottom: 12px; font-size: 26px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+        }
+
+        .sba-tool-card p {
+            font-size: 14px; margin-top: 0; margin-bottom: 25px; opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .sba-tool-input {
+            width: 100%; padding: 15px; margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.3); border-radius: 10px;
+            background: rgba(0,0,0,0.2); color: #fff;
+            box-sizing: border-box; font-family: inherit; cursor: pointer;
+        }
+
+        .sba-tool-input::file-selector-button {
+            background: rgba(255,255,255,0.2); border: none; color: white;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer; margin-right: 15px;
+            transition: background 0.3s;
+            font-weight: bold;
+        }
+        .sba-tool-input::file-selector-button:hover { background: rgba(255,255,255,0.3); }
+        .sba-tool-input:focus { outline: none; border-color: rgba(255,255,255,0.6); }
+
+        .sba-button-group { display: flex; gap: 15px; margin-top: auto; width: 100%; }
+
+        .sba-tool-btn {
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+            padding: 15px 10px; border-radius: 10px; color: #fff;
+            font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.3s; flex: 1; 
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .sba-tool-btn:hover { background: rgba(255,255,255,0.35); }
+        .sba-tool-btn:disabled { background: rgba(0,0,0,0.2); cursor: not-allowed; color: rgba(255,255,255,0.3); border-color: transparent; }
+
+        .sba-clear-btn { background: rgba(231, 76, 60, 0.3); border-color: rgba(231, 76, 60, 0.5); flex: 0.4; }
+        .sba-clear-btn:hover { background: rgba(231, 76, 60, 0.6); }
+
+        .sba-status { margin-top: 20px; font-size: 14px; font-weight: bold; min-height: 20px; }
+        .sba-success { color: #2ecc71; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .sba-error { color: #ff6b6b; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -508,6 +600,7 @@
             <button class="tab-btn" onclick="switchTab('labelModifierTab', this)">2. Multi-Platform Modifier</button>
             <button class="tab-btn" onclick="switchTab('orderSplitterTab', this)">3. Order Item Splitter</button>
             <button class="tab-btn" onclick="switchTab('autoMergerTab', this)">4. Invoice + Slip Merger</button>
+            <button class="tab-btn" onclick="switchTab('universalExtractorTab', this)">5. Universal Extractor</button>
         </nav>
     </header>
 
@@ -1056,6 +1149,31 @@
                     <p>Built with PDF.js & PDF-lib</p>
                 </div>
 
+            </div>
+        </section>
+
+        <!-- =========================================================
+             TAB 5: SBA HUB | UNIVERSAL ORDER EXTRACTOR
+             ========================================================= -->
+        <section id="universalExtractorTab" class="tab-section">
+            <div class="sba-extractor-wrapper">
+                <div class="sba-page-title">SBA Hub | Universal Order Extractor</div>
+
+                <div class="sba-tools-wrapper">
+                    <div class="sba-tool-card">
+                        <h1>All-in-One Extractor</h1>
+                        <p>Upload all your PDFs at once (Amazon, Flipkart, Meesho).<br>The tool will automatically detect the platform and generate <b>ONE</b> unified Excel file.</p>
+                        
+                        <input type="file" id="universalPdfInput" class="sba-tool-input" accept="application/pdf" multiple>
+                        
+                        <div class="sba-button-group">
+                            <button id="extractAllBtn" class="sba-tool-btn">Export All to Excel</button>
+                            <button id="clearBtn" class="sba-tool-btn sba-clear-btn">Clear</button>
+                        </div>
+                        
+                        <div id="statusMsg" class="sba-status"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -2688,6 +2806,339 @@
             } finally {
                 mergerEls.previewLoader.classList.add('hidden');
             }
+        });
+
+        /* ==========================================
+           SECTION 5: SBA UNIVERSAL EXTRACTOR SCRIPT
+           ========================================== */
+        function extractAmazon(textItems, fullText) {
+            let orderMatch = fullText.match(/Order Number\s*[:\s]+([0-9-]+)/i) || fullText.match(/Order Id\s*[:\s]+([0-9-]+)/i);
+            let total = "0.00";
+            let products = [];
+
+            let totalTextIndex = textItems.findIndex(item => item.includes("TOTAL:") || item === "TOTAL:");
+            let amtWordsIdx = textItems.findIndex(item => item.includes("Amount in Words"));
+
+            if (totalTextIndex !== -1 && amtWordsIdx !== -1 && amtWordsIdx > totalTextIndex) {
+                let blockText = textItems.slice(totalTextIndex, amtWordsIdx).join(" ");
+                let priceMatches = [...blockText.matchAll(/(?:₹|Rs\.?|INR)?\s*(\d[\d,]*\.\d{2})/gi)];
+                if (priceMatches.length > 0) total = priceMatches[priceMatches.length - 1][1];
+            }
+
+            if (total === "0.00") {
+                const fallbackPrices = [...fullText.matchAll(/(?:Grand\s*Total|Total|Amount\s*Payable)\s*[:]?\s*(?:₹|Rs\.?)?\s*(\d[\d,]*\.\d{2})/gi)];
+                if(fallbackPrices.length > 0) total = fallbackPrices[fallbackPrices.length - 1][1];
+            }
+
+            let itemBlock = fullText;
+            let totalMatch = fullText.match(/TOTAL\s*:/i) || fullText.match(/Amount in Words/i);
+            if (totalMatch) {
+                itemBlock = fullText.substring(0, totalMatch.index);
+            }
+
+            const regex = /\(\s*([^)]+)\s*\)\s*HSN(?:[\s:]*\d+)?/gi;
+            let match;
+            
+            while ((match = regex.exec(itemBlock)) !== null) {
+                let skuName = match[1].trim();
+                let qty = "1";
+                
+                let afterText = itemBlock.substring(regex.lastIndex, regex.lastIndex + 80);
+                let tokens = afterText.trim().split(/\s+/);
+                
+                for (let token of tokens) {
+                    if (/^\d+$/.test(token)) {
+                        qty = token;
+                        break;
+                    }
+                }
+                products.push({ sku: skuName, qty: qty });
+            }
+
+            if (products.length === 0) {
+                const backupRegex = /\(\s*([^)]+)\s*\)/g;
+                let backupMatches = [...itemBlock.matchAll(backupRegex)];
+                for (let b of backupMatches) {
+                    products.push({ sku: b[1].trim(), qty: "1" });
+                }
+            }
+
+            let result = [];
+            if (orderMatch) {
+                if (products.length > 0) {
+                    let skuMap = {};
+                    for (let p of products) {
+                        let q = parseInt(p.qty, 10) || 1;
+                        if (skuMap[p.sku]) {
+                            skuMap[p.sku] += q;
+                        } else {
+                            skuMap[p.sku] = q;
+                        }
+                    }
+                    
+                    let combinedSku = Object.keys(skuMap).join(" | ");
+                    let combinedQty = Object.values(skuMap).join(" | ");
+                    
+                    result.push({ 
+                        "Order ID": orderMatch[1], 
+                        "Platform": "Amazon", 
+                        "SKU": combinedSku, 
+                        "Qty": combinedQty, 
+                        "Total Amount": total 
+                    });
+                } else {
+                    result.push({ 
+                        "Order ID": orderMatch[1], 
+                        "Platform": "Amazon", 
+                        "SKU": "Not Found", 
+                        "Qty": "1", 
+                        "Total Amount": total 
+                    });
+                }
+            }
+            return result;
+        }
+
+        function extractFlipkart(textItems, pageText) {
+            let orderID = "Not Found", totalAmount = "0.00";
+            const odMatch = pageText.match(/(OD\d{15,})/);
+            if (odMatch) orderID = odMatch[1];
+            
+            const exactTotalRegex = /TOTAL\s*PRICE[\s:]*(\d[\d,]*\.\d{2})/i;
+            const exactMatch = pageText.match(exactTotalRegex);
+
+            if (exactMatch) {
+                totalAmount = exactMatch[1];
+            } else {
+                const priceRegex = /(?:Amount to be Collected|Collectable Amount|Invoice Value|Grand Total)[^\d]*?(\d[\d,]*\.\d{2})/gi;
+                const priceMatches = [...pageText.matchAll(priceRegex)];
+
+                if (priceMatches.length > 0) {
+                    totalAmount = priceMatches[priceMatches.length - 1][1];
+                } else {
+                    const currencyRegex = /(?:Rs\.?|₹|INR)\s*(\d[\d,]*\.\d{2})/gi;
+                    const currencyMatches = [...pageText.matchAll(currencyRegex)];
+                    if (currencyMatches.length > 0) {
+                        totalAmount = currencyMatches[currencyMatches.length - 1][1];
+                    } else {
+                        const lastDecimalRegex = /(\d[\d,]*\.\d{2})/g;
+                        const allDecimals = [...pageText.matchAll(lastDecimalRegex)];
+                        if (allDecimals.length > 0) {
+                            totalAmount = allDecimals[allDecimals.length - 1][1];
+                        }
+                    }
+                }
+            }
+
+            let skuStartIndex = textItems.findIndex(item => item.includes("SKU ID"));
+            let finalProducts = [];
+
+            if (skuStartIndex !== -1) {
+                let currentSerial = 1, currentSkuParts = [], currentQty = "1";
+                for (let j = skuStartIndex + 1; j < textItems.length; j++) {
+                    let item = textItems[j];
+                    
+                    if (item.match(/^FMP[A-Z0-9]+/i) || item.includes("STD E") || item.includes("Ordered through") || item.includes("Not for resale") || item.includes("Sold By:")) {
+                        if (currentSkuParts.length > 0) finalProducts.push({ parts: currentSkuParts, qty: currentQty });
+                        break;
+                    }
+                    if (item === "QTY" || item === "Description") continue;
+
+                    let combinedMatch = item.match(/^(\d+)\s+(.+)/);
+                    if (combinedMatch && combinedMatch[1] === currentSerial.toString()) {
+                        if (currentSkuParts.length > 0) {
+                            finalProducts.push({ parts: currentSkuParts, qty: currentQty });
+                            currentSkuParts = []; currentQty = "1";
+                        }
+                        currentSkuParts.push(combinedMatch[2]);
+                        currentSerial++;
+                        continue;
+                    }
+
+                    if (item === currentSerial.toString()) {
+                        if (currentSkuParts.length > 0) {
+                            finalProducts.push({ parts: currentSkuParts, qty: currentQty });
+                            currentSkuParts = []; currentQty = "1";
+                        }
+                        currentSerial++; continue;
+                    }
+                    
+                    if (/^\d+$/.test(item) && item.length <= 4) {
+                        currentQty = item;
+                    } else {
+                        currentSkuParts.push(item);
+                    }
+                }
+                
+                if (currentSkuParts.length > 0 && finalProducts.length === 0) {
+                    finalProducts.push({ parts: currentSkuParts, qty: currentQty });
+                }
+            }
+
+            let parsedItems = [];
+            if (finalProducts.length > 0) {
+                for (let p of finalProducts) {
+                    let pSkuID = p.parts.join(" ").split("|")[0].trim().replace(/^\d+\s+/, '').trim();
+                    parsedItems.push({ skuID: pSkuID, qty: p.qty });
+                }
+            } else {
+                const textMatch = pageText.match(/SKU ID\s*QTY\s*\d+\s*([^|]+)/i);
+                const pipeRegex = /\|\s*(?!IGST|CESS|HSN|Discount|Total|IMEI|SrNo)([^|]+?)\s*\|/i;
+                const pipeMatch = pageText.match(pipeRegex);
+
+                if (textMatch) {
+                    parsedItems.push({ skuID: textMatch[1].trim(), qty: "1" });
+                } else if (pipeMatch) {
+                    let qty = "1";
+                    const qtyMatch = pageText.match(/CESS:\s*[\d.]+%?\s*\|?\s*(\d+)/i) || pageText.match(/IGST:\s*[\d.]+%?\s*\|?\s*(\d+)/i) || pageText.match(/TOTAL QTY:\s*(\d+)/i);
+                    if (qtyMatch) qty = qtyMatch[1];
+                    
+                    parsedItems.push({ skuID: pipeMatch[1].trim(), qty: qty });
+                } else {
+                    parsedItems.push({ skuID: "Not Found", qty: "1" });
+                }
+            }
+
+            let aggregatedItems = [];
+            for (let item of parsedItems) {
+                let existing = aggregatedItems.find(i => i.skuID === item.skuID);
+                if (existing) {
+                    existing.qty = (parseInt(existing.qty, 10) + parseInt(item.qty, 10)).toString();
+                } else {
+                    aggregatedItems.push({ ...item });
+                }
+            }
+            parsedItems = aggregatedItems;
+
+            let result = [];
+            if (orderID !== "Not Found") {
+                let combinedSku = parsedItems.map(p => p.skuID).join(" | ");
+                let combinedQty = parsedItems.map(p => p.qty).join(" | ");
+                
+                result.push({
+                    "Order ID": orderID,
+                    "Platform": "Flipkart / E-Kart",
+                    "SKU": combinedSku,
+                    "Qty": combinedQty,
+                    "Total Amount": totalAmount
+                });
+            }
+            return result;
+        }
+
+        function extractMeesho(textItems, pageText) {
+            let productSku = "Not Found", quantity = "1", orderNumber = "Not Found", totalAmount = "0.00";
+            
+            const tableRegex = /Order No\.\s+(\S+)\s+(.+?)\s+(\d+)\s+([a-zA-Z]+)\s+(\d{16,}(?:[_\s]\d+)?)/;
+            const match = pageText.match(tableRegex);
+            if (match) { 
+                productSku = match[1]; quantity = match[3]; orderNumber = match[5].replace(/\s+/g, '_'); 
+            } else {
+                const orderHunt = pageText.match(/(\d{16,}(?:[_\s]\d+)?)/);
+                if (orderHunt) orderNumber = orderHunt[1].replace(/\s+/g, '_');
+
+                let skuIdx = textItems.indexOf("SKU");
+                if(skuIdx !== -1) {
+                    let s = skuIdx + 1; while(s < textItems.length && textItems[s] === "") s++;
+                    if(s < textItems.length) productSku = textItems[s];
+                }
+
+                let qtyIdx = textItems.indexOf("Qty");
+                if(qtyIdx !== -1) {
+                    for(let q = qtyIdx+1; q < qtyIdx+5; q++){
+                        if(/^\d+$/.test(textItems[q])){ quantity = textItems[q]; break; }
+                    }
+                }
+            }
+
+            const rsMatches = [...pageText.matchAll(/Rs\.\s*(\d[\d,]*\.\d{2})/g)];
+            if (rsMatches.length > 0) totalAmount = rsMatches[rsMatches.length - 1][1];
+
+            let finalQty = (parseInt(quantity, 10) || 1).toString();
+
+            if (orderNumber !== "Not Found" || productSku !== "Not Found") {
+                return [{
+                    "Order ID": orderNumber,
+                    "Platform": "Meesho",
+                    "SKU": productSku,
+                    "Qty": finalQty,
+                    "Total Amount": totalAmount
+                }];
+            }
+            return [];
+        }
+
+        const extractAllBtn = document.getElementById('extractAllBtn');
+        extractAllBtn.addEventListener('click', async () => {
+            const files = document.getElementById('universalPdfInput').files;
+            const status = document.getElementById('statusMsg');
+            
+            if (!files.length) { 
+                status.textContent = 'Please select at least one PDF.'; 
+                status.className = 'sba-status sba-error'; 
+                return; 
+            }
+
+            extractAllBtn.disabled = true; 
+            extractAllBtn.textContent = 'Processing...'; 
+            status.textContent = '';
+            
+            let allData = [];
+
+            try {
+                for (let file of files) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                    
+                    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                        const page = await pdf.getPage(pageNum);
+                        const textContent = await page.getTextContent();
+                        const textItems = textContent.items.map(item => item.str.trim()).filter(s => s.length > 0);
+                        const pageText = textItems.join(' ');
+
+                        let isAmazon = pageText.match(/Order Number\s*[:\s]+([0-9-]+)/i) || pageText.match(/Amazon/i);
+                        let isFlipkart = pageText.match(/(OD\d{15,})/);
+
+                        if (isAmazon) {
+                            allData.push(...extractAmazon(textItems, pageText));
+                        } else if (isFlipkart) {
+                            allData.push(...extractFlipkart(textItems, pageText));
+                        } else {
+                            let meeshoData = extractMeesho(textItems, pageText);
+                            if (meeshoData.length) {
+                                allData.push(...meeshoData);
+                            }
+                        }
+                    }
+                }
+
+                if (allData.length === 0) { 
+                    status.textContent = 'No valid order data found in the uploaded PDFs.'; 
+                    status.className = 'sba-status sba-error'; 
+                    return; 
+                }
+                
+                const ws = XLSX.utils.json_to_sheet(allData); 
+                const wb = XLSX.utils.book_new(); 
+                XLSX.utils.book_append_sheet(wb, ws, "Combined_Orders"); 
+                XLSX.writeFile(wb, "All_Ecommerce_Orders.xlsx");
+                
+                status.textContent = `✅ ${allData.length} records generated successfully!`; 
+                status.className = 'sba-status sba-success';
+                
+            } catch (error) { 
+                console.error(error);
+                status.textContent = 'Error processing PDFs. Check console.'; 
+                status.className = 'sba-status sba-error'; 
+            } finally { 
+                extractAllBtn.disabled = false; 
+                extractAllBtn.textContent = 'Export All to Excel'; 
+            }
+        });
+
+        document.getElementById('clearBtn').addEventListener('click', () => { 
+            document.getElementById('universalPdfInput').value = ''; 
+            document.getElementById('statusMsg').textContent = ''; 
         });
     </script>
 </body>
